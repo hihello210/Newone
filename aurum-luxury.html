@@ -1,0 +1,2907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AURUM — The Art of Timekeeping</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Cinzel:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  /* ═══════════════════════════════════════════════
+     ROOT & CSS VARIABLES
+  ═══════════════════════════════════════════════ */
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8C96B;
+    --gold-dim: #8B6914;
+    --gold-pale: #F5E6BC;
+    --obsidian: #0A0A0B;
+    --ink: #0F0F10;
+    --charcoal: #1A1A1C;
+    --slate: #2A2A2E;
+    --warm-white: #F0EBE1;
+    --ivory: #E8E0D0;
+    --cream: #D4C9B0;
+    --text-muted: #8A8070;
+    --transition: cubic-bezier(0.76, 0, 0.24, 1);
+    --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* ═══════════════════════════════════════════════
+     RESET & BASE
+  ═══════════════════════════════════════════════ */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    font-size: clamp(14px, 1.1vw, 16px);
+    overflow-x: hidden;
+  }
+
+  body {
+    background: var(--obsidian);
+    color: var(--warm-white);
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    line-height: 1.7;
+    cursor: none;
+    overflow-x: hidden;
+  }
+
+  /* ═══════════════════════════════════════════════
+     CUSTOM CURSOR
+  ═══════════════════════════════════════════════ */
+  #cursor {
+    position: fixed;
+    width: 12px; height: 12px;
+    background: var(--gold);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s var(--transition), height 0.3s var(--transition), background 0.3s;
+    mix-blend-mode: difference;
+  }
+
+  #cursor-ring {
+    position: fixed;
+    width: 40px; height: 40px;
+    border: 1px solid rgba(201,168,76,0.5);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: width 0.5s var(--transition), height 0.5s var(--transition), border-color 0.3s;
+  }
+
+  body:has(a:hover) #cursor,
+  body:has(button:hover) #cursor { width: 20px; height: 20px; }
+  body:has(a:hover) #cursor-ring,
+  body:has(button:hover) #cursor-ring { width: 60px; height: 60px; border-color: var(--gold); }
+
+  /* ═══════════════════════════════════════════════
+     NOISE TEXTURE OVERLAY
+  ═══════════════════════════════════════════════ */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.025;
+    pointer-events: none;
+    z-index: 9997;
+  }
+
+  /* ═══════════════════════════════════════════════
+     SCROLLBAR
+  ═══════════════════════════════════════════════ */
+  ::-webkit-scrollbar { width: 3px; }
+  ::-webkit-scrollbar-track { background: var(--obsidian); }
+  ::-webkit-scrollbar-thumb { background: var(--gold-dim); }
+
+  /* ═══════════════════════════════════════════════
+     NAVIGATION
+  ═══════════════════════════════════════════════ */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 2rem 4rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background 0.6s var(--transition), padding 0.4s;
+  }
+
+  nav.scrolled {
+    background: rgba(10,10,11,0.92);
+    backdrop-filter: blur(20px);
+    padding: 1.2rem 4rem;
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+  }
+
+  .nav-logo {
+    font-family: 'Cinzel', serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.4em;
+    color: var(--gold);
+    text-decoration: none;
+    font-weight: 500;
+    position: relative;
+  }
+
+  .nav-logo::after {
+    content: '';
+    position: absolute;
+    bottom: -4px; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    transform: scaleX(0);
+    transition: transform 0.4s var(--transition);
+  }
+
+  .nav-logo:hover::after { transform: scaleX(1); }
+
+  .nav-links {
+    display: flex;
+    gap: 3.5rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    color: var(--ivory);
+    text-decoration: none;
+    text-transform: uppercase;
+    position: relative;
+    transition: color 0.3s;
+  }
+
+  .nav-links a::before {
+    content: attr(data-text);
+    position: absolute;
+    top: 0; left: 0;
+    color: var(--gold);
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path 0.4s var(--transition);
+  }
+
+  .nav-links a:hover::before { clip-path: inset(0 0% 0 0); }
+
+  .nav-cta {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    padding: 0.8rem 2rem;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    background: transparent;
+    cursor: none;
+    transition: background 0.4s, color 0.4s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .nav-cta::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--gold);
+    transform: translateX(-100%);
+    transition: transform 0.4s var(--transition);
+  }
+
+  .nav-cta:hover::before { transform: translateX(0); }
+  .nav-cta:hover { color: var(--obsidian); }
+  .nav-cta span { position: relative; z-index: 1; }
+
+  /* ═══════════════════════════════════════════════
+     HERO SECTION
+  ═══════════════════════════════════════════════ */
+  #hero {
+    position: relative;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: var(--obsidian);
+  }
+
+  /* Radial gold glow */
+  #hero::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 80vmax; height: 80vmax;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(ellipse, rgba(201,168,76,0.07) 0%, transparent 65%);
+    pointer-events: none;
+  }
+
+  /* Animated grid lines */
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px);
+    background-size: 80px 80px;
+    animation: gridPan 20s linear infinite;
+  }
+
+  @keyframes gridPan {
+    from { transform: translateY(0); }
+    to { transform: translateY(80px); }
+  }
+
+  /* Side decorative lines */
+  .hero-line-left,
+  .hero-line-right {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, rgba(201,168,76,0.3) 30%, rgba(201,168,76,0.3) 70%, transparent);
+  }
+  .hero-line-left { left: 6rem; }
+  .hero-line-right { right: 6rem; }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    max-width: 900px;
+    padding: 0 2rem;
+  }
+
+  .hero-eyebrow {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.5em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    animation: fadeUp 1s 0.3s var(--transition) forwards;
+  }
+
+  .hero-title {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(3.5rem, 8vw, 8rem);
+    font-weight: 400;
+    line-height: 0.95;
+    letter-spacing: 0.12em;
+    color: var(--warm-white);
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+  }
+
+  .hero-title span {
+    display: block;
+    opacity: 0;
+    animation: fadeUp 1.2s var(--transition) forwards;
+  }
+  .hero-title span:nth-child(1) { animation-delay: 0.5s; }
+  .hero-title span:nth-child(2) {
+    color: var(--gold);
+    font-style: italic;
+    animation-delay: 0.7s;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(3rem, 7vw, 7rem);
+    letter-spacing: 0.05em;
+  }
+  .hero-title span:nth-child(3) { animation-delay: 0.9s; }
+
+  .hero-sub {
+    font-family: 'EB Garamond', serif;
+    font-size: clamp(1rem, 1.8vw, 1.3rem);
+    font-style: italic;
+    color: var(--text-muted);
+    margin-top: 2rem;
+    letter-spacing: 0.1em;
+    opacity: 0;
+    animation: fadeUp 1s 1.2s var(--transition) forwards;
+  }
+
+  .hero-cta-group {
+    display: flex;
+    align-items: center;
+    gap: 3rem;
+    justify-content: center;
+    margin-top: 3.5rem;
+    opacity: 0;
+    animation: fadeUp 1s 1.5s var(--transition) forwards;
+  }
+
+  .btn-primary {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    padding: 1.2rem 3rem;
+    background: var(--gold);
+    color: var(--obsidian);
+    border: none;
+    cursor: none;
+    position: relative;
+    overflow: hidden;
+    transition: color 0.4s;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--obsidian);
+    transform: translateY(100%);
+    transition: transform 0.4s var(--transition);
+  }
+
+  .btn-primary:hover { color: var(--gold); }
+  .btn-primary:hover::before { transform: translateY(0); }
+  .btn-primary span { position: relative; z-index: 1; }
+
+  .btn-ghost {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--ivory);
+    background: none;
+    border: none;
+    cursor: none;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .btn-ghost:hover { color: var(--gold); }
+
+  .btn-ghost::after {
+    content: '';
+    width: 40px; height: 1px;
+    background: currentColor;
+    transition: width 0.4s var(--transition);
+  }
+
+  .btn-ghost:hover::after { width: 70px; }
+
+  /* Scroll indicator */
+  .scroll-indicator {
+    position: absolute;
+    bottom: 3rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+    opacity: 0;
+    animation: fadeIn 1s 2s forwards;
+  }
+
+  .scroll-indicator span {
+    font-family: 'Cinzel', serif;
+    font-size: 0.55rem;
+    letter-spacing: 0.4em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  .scroll-line {
+    width: 1px;
+    height: 60px;
+    background: linear-gradient(to bottom, var(--gold), transparent);
+    animation: scrollPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes scrollPulse {
+    0%, 100% { opacity: 0.3; height: 40px; }
+    50% { opacity: 1; height: 70px; }
+  }
+
+  /* ═══════════════════════════════════════════════
+     ANIMATED WATCH FACE (HERO)
+  ═══════════════════════════════════════════════ */
+  .watch-showcase {
+    position: absolute;
+    right: 8vw;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0;
+    animation: fadeIn 1.5s 1s forwards;
+  }
+
+  .watch-svg-wrap {
+    width: clamp(180px, 22vw, 320px);
+    aspect-ratio: 1;
+    filter: drop-shadow(0 0 60px rgba(201,168,76,0.2));
+    animation: watchFloat 6s ease-in-out infinite;
+  }
+
+  @keyframes watchFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    33% { transform: translateY(-12px) rotate(0.5deg); }
+    66% { transform: translateY(6px) rotate(-0.3deg); }
+  }
+
+  /* ═══════════════════════════════════════════════
+     MARQUEE STRIP
+  ═══════════════════════════════════════════════ */
+  .marquee-strip {
+    background: var(--gold);
+    padding: 0.9rem 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .marquee-inner {
+    display: inline-flex;
+    animation: marquee 20s linear infinite;
+  }
+
+  .marquee-inner span {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.4em;
+    color: var(--obsidian);
+    text-transform: uppercase;
+    padding: 0 3rem;
+  }
+
+  .marquee-inner span.sep {
+    color: rgba(10,10,11,0.4);
+    padding: 0;
+  }
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* ═══════════════════════════════════════════════
+     SECTION UTILITIES
+  ═══════════════════════════════════════════════ */
+  section { position: relative; }
+
+  .section-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.5em;
+    color: var(--gold);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .section-label::before {
+    content: '';
+    width: 40px; height: 1px;
+    background: var(--gold);
+    display: block;
+  }
+
+  .section-number {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.75rem;
+    font-style: italic;
+    color: var(--gold-dim);
+    margin-right: 1rem;
+  }
+
+  /* reveal on scroll */
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.9s var(--transition), transform 0.9s var(--transition);
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .reveal-left {
+    opacity: 0;
+    transform: translateX(-50px);
+    transition: opacity 0.9s var(--transition), transform 0.9s var(--transition);
+  }
+  .reveal-left.visible { opacity: 1; transform: translateX(0); }
+  .reveal-right {
+    opacity: 0;
+    transform: translateX(50px);
+    transition: opacity 0.9s var(--transition), transform 0.9s var(--transition);
+  }
+  .reveal-right.visible { opacity: 1; transform: translateX(0); }
+
+  /* ═══════════════════════════════════════════════
+     ABOUT / PHILOSOPHY SECTION
+  ═══════════════════════════════════════════════ */
+  #philosophy {
+    padding: 10rem 4rem;
+    background: var(--ink);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8rem;
+    align-items: center;
+  }
+
+  .philosophy-text .section-label { margin-bottom: 3rem; }
+
+  .philosophy-heading {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(2rem, 4vw, 4.2rem);
+    font-weight: 400;
+    line-height: 1.15;
+    color: var(--warm-white);
+    letter-spacing: 0.05em;
+    margin-bottom: 2.5rem;
+  }
+
+  .philosophy-heading em {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    color: var(--gold);
+    font-size: 1.1em;
+  }
+
+  .philosophy-body {
+    font-size: 1.15rem;
+    color: var(--text-muted);
+    line-height: 1.9;
+    font-weight: 300;
+    max-width: 480px;
+    margin-bottom: 3rem;
+  }
+
+  .philosophy-body strong {
+    color: var(--ivory);
+    font-weight: 400;
+  }
+
+  .philosophy-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border-top: 1px solid rgba(201,168,76,0.2);
+    padding-top: 3rem;
+  }
+
+  .stat-item {
+    text-align: center;
+    padding: 0 1.5rem;
+    border-right: 1px solid rgba(201,168,76,0.15);
+  }
+
+  .stat-item:last-child { border-right: none; }
+  .stat-item:first-child { padding-left: 0; }
+
+  .stat-number {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 3.5rem;
+    font-weight: 300;
+    color: var(--gold);
+    line-height: 1;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.55rem;
+    letter-spacing: 0.3em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  /* Right side: ornamental clock illustration */
+  .philosophy-visual {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+  }
+
+  .ornament-ring {
+    position: relative;
+    width: clamp(280px, 35vw, 480px);
+    aspect-ratio: 1;
+    animation: slowSpin 40s linear infinite;
+  }
+
+  .ornament-ring-2 {
+    position: absolute;
+    inset: 12%;
+    animation: slowSpin 25s linear infinite reverse;
+  }
+
+  .ornament-center {
+    position: absolute;
+    inset: 25%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ornament-logo-text {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(1rem, 2.5vw, 2rem);
+    letter-spacing: 0.4em;
+    color: var(--gold);
+    text-align: center;
+    line-height: 1.8;
+  }
+
+  @keyframes slowSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* ═══════════════════════════════════════════════
+     COLLECTION SECTION
+  ═══════════════════════════════════════════════ */
+  #collection {
+    padding: 10rem 4rem;
+    background: var(--obsidian);
+  }
+
+  .collection-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 6rem;
+  }
+
+  .collection-title {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(2.5rem, 5vw, 5.5rem);
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: 0.05em;
+    color: var(--warm-white);
+  }
+
+  .collection-title em {
+    display: block;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    color: var(--gold);
+    font-size: 1.15em;
+  }
+
+  .collection-filter {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+  }
+
+  .filter-btn {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    cursor: none;
+    padding: 0.5rem 0;
+    position: relative;
+    transition: color 0.3s;
+  }
+
+  .filter-btn.active, .filter-btn:hover { color: var(--gold); }
+
+  .filter-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: var(--gold);
+  }
+
+  .collection-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+
+  .watch-card {
+    position: relative;
+    background: var(--charcoal);
+    overflow: hidden;
+    group: true;
+    cursor: none;
+  }
+
+  .watch-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px solid rgba(201,168,76,0);
+    transition: border-color 0.4s;
+    z-index: 2;
+  }
+
+  .watch-card:hover::before { border-color: rgba(201,168,76,0.4); }
+
+  .watch-card-image {
+    aspect-ratio: 3/4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .watch-card-bg {
+    position: absolute;
+    inset: 0;
+    transition: transform 0.8s var(--transition);
+  }
+
+  .watch-card:hover .watch-card-bg { transform: scale(1.06); }
+
+  .watch-card-svg {
+    position: relative;
+    z-index: 1;
+    width: 60%;
+    transition: transform 0.6s var(--spring);
+    filter: drop-shadow(0 20px 60px rgba(0,0,0,0.5));
+  }
+
+  .watch-card:hover .watch-card-svg { transform: scale(1.08) translateY(-10px); }
+
+  .watch-card-info {
+    padding: 2rem 2rem 2.5rem;
+    border-top: 1px solid rgba(201,168,76,0.1);
+  }
+
+  .watch-card-collection {
+    font-family: 'Cinzel', serif;
+    font-size: 0.55rem;
+    letter-spacing: 0.4em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 0.7rem;
+  }
+
+  .watch-card-name {
+    font-family: 'Cinzel', serif;
+    font-size: 1.3rem;
+    font-weight: 400;
+    color: var(--warm-white);
+    letter-spacing: 0.08em;
+    margin-bottom: 0.5rem;
+  }
+
+  .watch-card-desc {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  .watch-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .watch-price {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.8rem;
+    font-weight: 300;
+    color: var(--gold);
+  }
+
+  .watch-price span {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    letter-spacing: 0.15em;
+    display: block;
+    line-height: 1;
+    margin-bottom: 0.2rem;
+  }
+
+  .watch-add-btn {
+    width: 44px; height: 44px;
+    border: 1px solid rgba(201,168,76,0.3);
+    background: none;
+    color: var(--gold);
+    cursor: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s, border-color 0.3s;
+    font-size: 1.5rem;
+    line-height: 1;
+  }
+
+  .watch-add-btn:hover { background: var(--gold); color: var(--obsidian); border-color: var(--gold); }
+
+  /* Large featured card */
+  .watch-card.featured {
+    grid-row: span 2;
+  }
+
+  .watch-card.featured .watch-card-image { aspect-ratio: auto; height: 100%; min-height: 600px; }
+
+  /* ═══════════════════════════════════════════════
+     CRAFTSMANSHIP SECTION
+  ═══════════════════════════════════════════════ */
+  #craftsmanship {
+    background: var(--charcoal);
+    padding: 10rem 0;
+    overflow: hidden;
+  }
+
+  .craft-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+  }
+
+  .craft-visual {
+    position: relative;
+    padding: 4rem;
+  }
+
+  .craft-image-frame {
+    aspect-ratio: 4/5;
+    background: var(--slate);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .craft-image-frame::before {
+    content: '';
+    position: absolute;
+    inset: 20px;
+    border: 1px solid rgba(201,168,76,0.2);
+    z-index: 2;
+  }
+
+  .craft-image-inner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .craft-gear-animation {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .craft-gold-accent {
+    position: absolute;
+    bottom: -2rem; right: -2rem;
+    width: 180px; height: 180px;
+    background: var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+  }
+
+  .craft-gold-text {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: var(--obsidian);
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 2;
+  }
+
+  .craft-content {
+    padding: 4rem 6rem 4rem 4rem;
+  }
+
+  .craft-heading {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(2rem, 3.5vw, 4rem);
+    font-weight: 400;
+    line-height: 1.2;
+    color: var(--warm-white);
+    letter-spacing: 0.05em;
+    margin-bottom: 2.5rem;
+  }
+
+  .craft-heading em {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    color: var(--gold);
+    font-size: 1.1em;
+  }
+
+  .craft-steps {
+    list-style: none;
+    counter-reset: craft-step;
+  }
+
+  .craft-step {
+    counter-increment: craft-step;
+    padding: 2rem 0;
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2rem;
+    align-items: start;
+    position: relative;
+    transition: padding 0.3s;
+  }
+
+  .craft-step:last-child { border-bottom: none; }
+
+  .craft-step-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 3rem;
+    font-weight: 300;
+    color: rgba(201,168,76,0.2);
+    line-height: 1;
+    width: 60px;
+    transition: color 0.3s;
+  }
+
+  .craft-step:hover .craft-step-num { color: var(--gold); }
+
+  .craft-step-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.9rem;
+    letter-spacing: 0.15em;
+    color: var(--ivory);
+    margin-bottom: 0.6rem;
+    text-transform: uppercase;
+  }
+
+  .craft-step-text {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+
+  /* ═══════════════════════════════════════════════
+     MATERIALS SECTION
+  ═══════════════════════════════════════════════ */
+  #materials {
+    background: var(--obsidian);
+    padding: 10rem 4rem;
+  }
+
+  .materials-header {
+    text-align: center;
+    margin-bottom: 6rem;
+  }
+
+  .materials-heading {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(2rem, 4vw, 4.5rem);
+    font-weight: 400;
+    color: var(--warm-white);
+    letter-spacing: 0.1em;
+    margin-bottom: 1.5rem;
+  }
+
+  .materials-sub {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    font-style: italic;
+    font-family: 'EB Garamond', serif;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .materials-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+  }
+
+  .material-card {
+    aspect-ratio: 3/4;
+    position: relative;
+    overflow: hidden;
+    cursor: none;
+  }
+
+  .material-bg {
+    position: absolute;
+    inset: 0;
+    transition: transform 0.6s var(--transition);
+  }
+
+  .material-card:hover .material-bg { transform: scale(1.08); }
+
+  .material-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.1) 60%);
+    z-index: 1;
+  }
+
+  .material-info {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 2.5rem 2rem;
+    z-index: 2;
+    transform: translateY(30px);
+    transition: transform 0.5s var(--transition);
+  }
+
+  .material-card:hover .material-info { transform: translateY(0); }
+
+  .material-name {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.12em;
+    color: var(--warm-white);
+    margin-bottom: 0.4rem;
+  }
+
+  .material-origin {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.85rem;
+    font-style: italic;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+    margin-bottom: 0.8rem;
+  }
+
+  .material-desc {
+    font-size: 0.85rem;
+    color: rgba(240,235,225,0.6);
+    line-height: 1.6;
+    opacity: 0;
+    transition: opacity 0.4s 0.1s;
+    max-height: 0;
+    overflow: hidden;
+  }
+
+  .material-card:hover .material-desc { opacity: 1; max-height: 100px; }
+
+  .material-border {
+    position: absolute;
+    inset: 1.5rem;
+    border: 1px solid rgba(201,168,76,0);
+    transition: border-color 0.4s;
+    z-index: 2;
+  }
+
+  .material-card:hover .material-border { border-color: rgba(201,168,76,0.3); }
+
+  /* ═══════════════════════════════════════════════
+     TESTIMONIAL / HERITAGE QUOTE SECTION
+  ═══════════════════════════════════════════════ */
+  #heritage {
+    background: var(--gold);
+    padding: 8rem 4rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #heritage::before {
+    content: '\201C';
+    position: absolute;
+    top: -2rem; left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 30rem;
+    color: rgba(0,0,0,0.06);
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .heritage-quote {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.8rem, 3.5vw, 4rem);
+    font-style: italic;
+    font-weight: 400;
+    color: var(--obsidian);
+    line-height: 1.4;
+    max-width: 900px;
+    margin: 0 auto 3rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .heritage-attribution {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.4em;
+    color: rgba(10,10,11,0.5);
+    text-transform: uppercase;
+  }
+
+  /* ═══════════════════════════════════════════════
+     BESPOKE / CTA SECTION
+  ═══════════════════════════════════════════════ */
+  #bespoke {
+    padding: 12rem 4rem;
+    background: var(--ink);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6rem;
+    align-items: center;
+  }
+
+  .bespoke-heading {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(2.5rem, 4.5vw, 5.5rem);
+    font-weight: 400;
+    line-height: 1.1;
+    color: var(--warm-white);
+    letter-spacing: 0.05em;
+    margin-bottom: 2rem;
+  }
+
+  .bespoke-heading em {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    color: var(--gold);
+    font-size: 1.1em;
+    display: block;
+  }
+
+  .bespoke-text {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    line-height: 1.9;
+    margin-bottom: 3rem;
+    max-width: 440px;
+  }
+
+  .bespoke-features {
+    list-style: none;
+    margin-bottom: 3.5rem;
+  }
+
+  .bespoke-feature {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ivory);
+  }
+
+  .bespoke-feature::before {
+    content: '◆';
+    color: var(--gold);
+    font-size: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .bespoke-visual {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Rotating decorative element */
+  .bespoke-orb {
+    width: clamp(260px, 35vw, 460px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .bespoke-orb::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(201,168,76,0.12) 0%, rgba(201,168,76,0.02) 50%, transparent 70%);
+  }
+
+  /* ═══════════════════════════════════════════════
+     NEWSLETTER SECTION
+  ═══════════════════════════════════════════════ */
+  #newsletter {
+    background: var(--charcoal);
+    padding: 7rem 4rem;
+    text-align: center;
+    border-top: 1px solid rgba(201,168,76,0.1);
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+  }
+
+  .newsletter-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.5em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+  }
+
+  .newsletter-heading {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2rem, 4vw, 4.5rem);
+    font-style: italic;
+    font-weight: 300;
+    color: var(--warm-white);
+    margin-bottom: 1rem;
+    letter-spacing: 0.05em;
+  }
+
+  .newsletter-sub {
+    font-size: 1rem;
+    color: var(--text-muted);
+    margin-bottom: 3rem;
+  }
+
+  .newsletter-form {
+    display: flex;
+    max-width: 500px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .newsletter-input {
+    flex: 1;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-right: none;
+    padding: 1.2rem 1.5rem;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem;
+    color: var(--warm-white);
+    outline: none;
+    transition: border-color 0.3s, background 0.3s;
+  }
+
+  .newsletter-input::placeholder { color: var(--text-muted); font-style: italic; }
+  .newsletter-input:focus { border-color: var(--gold); background: rgba(201,168,76,0.04); }
+
+  .newsletter-btn {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    padding: 1.2rem 2.5rem;
+    background: var(--gold);
+    color: var(--obsidian);
+    border: 1px solid var(--gold);
+    cursor: none;
+    transition: background 0.3s, color 0.3s;
+    white-space: nowrap;
+  }
+
+  .newsletter-btn:hover { background: transparent; color: var(--gold); }
+
+  /* ═══════════════════════════════════════════════
+     FOOTER
+  ═══════════════════════════════════════════════ */
+  footer {
+    background: var(--obsidian);
+    padding: 6rem 4rem 3rem;
+  }
+
+  .footer-top {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 4rem;
+    padding-bottom: 4rem;
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+    margin-bottom: 3rem;
+  }
+
+  .footer-brand {
+    font-family: 'Cinzel', serif;
+    font-size: 2rem;
+    letter-spacing: 0.4em;
+    color: var(--gold);
+    margin-bottom: 1.5rem;
+    display: block;
+  }
+
+  .footer-tagline {
+    font-size: 1rem;
+    color: var(--text-muted);
+    line-height: 1.8;
+    font-style: italic;
+    font-family: 'EB Garamond', serif;
+    max-width: 260px;
+    margin-bottom: 2rem;
+  }
+
+  .footer-social {
+    display: flex;
+    gap: 1.2rem;
+  }
+
+  .social-link {
+    width: 36px; height: 36px;
+    border: 1px solid rgba(201,168,76,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.75rem;
+    transition: border-color 0.3s, color 0.3s, background 0.3s;
+    font-family: 'Cinzel', serif;
+  }
+
+  .social-link:hover { border-color: var(--gold); color: var(--gold); }
+
+  .footer-col-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.4em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+  }
+
+  .footer-links {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .footer-links a {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.3s;
+    letter-spacing: 0.05em;
+  }
+
+  .footer-links a:hover { color: var(--gold); }
+
+  .footer-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-copy {
+    font-family: 'Cinzel', serif;
+    font-size: 0.55rem;
+    letter-spacing: 0.25em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  .footer-legal {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+  }
+
+  .footer-legal a {
+    font-family: 'Cinzel', serif;
+    font-size: 0.55rem;
+    letter-spacing: 0.2em;
+    color: var(--text-muted);
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: color 0.3s;
+  }
+
+  .footer-legal a:hover { color: var(--gold); }
+
+  /* ═══════════════════════════════════════════════
+     ANIMATIONS
+  ═══════════════════════════════════════════════ */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeIn {
+    to { opacity: 1; }
+  }
+
+  /* Counter animation */
+  .counter { display: inline-block; }
+
+  /* ═══════════════════════════════════════════════
+     LOADING SCREEN
+  ═══════════════════════════════════════════════ */
+  #loader {
+    position: fixed;
+    inset: 0;
+    background: var(--obsidian);
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    transition: opacity 0.8s var(--transition), visibility 0.8s;
+  }
+
+  #loader.hidden { opacity: 0; visibility: hidden; }
+
+  .loader-logo {
+    font-family: 'Cinzel', serif;
+    font-size: 3rem;
+    letter-spacing: 0.6em;
+    color: var(--gold);
+    animation: loaderPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes loaderPulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+
+  .loader-bar-track {
+    width: 200px;
+    height: 1px;
+    background: rgba(201,168,76,0.2);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .loader-bar-fill {
+    position: absolute;
+    top: 0; left: 0;
+    height: 100%;
+    background: var(--gold);
+    width: 0%;
+    transition: width 0.3s;
+  }
+
+  .loader-text {
+    font-family: 'Cinzel', serif;
+    font-size: 0.55rem;
+    letter-spacing: 0.5em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  /* ═══════════════════════════════════════════════
+     RESPONSIVE (BASIC)
+  ═══════════════════════════════════════════════ */
+  @media (max-width: 1200px) {
+    .collection-grid { grid-template-columns: repeat(2, 1fr); }
+    .watch-card.featured { grid-row: auto; }
+    .watch-card.featured .watch-card-image { min-height: auto; }
+    .materials-grid { grid-template-columns: repeat(2, 1fr); }
+    .footer-top { grid-template-columns: 1fr 1fr; gap: 3rem; }
+  }
+
+  @media (max-width: 900px) {
+    nav { padding: 1.5rem 2rem; }
+    nav.scrolled { padding: 1rem 2rem; }
+    .nav-links, .nav-cta { display: none; }
+    #philosophy, #bespoke { grid-template-columns: 1fr; gap: 4rem; }
+    .craft-inner { grid-template-columns: 1fr; }
+    .craft-content { padding: 3rem 2rem; }
+    .hero-line-left, .hero-line-right { display: none; }
+    .watch-showcase { display: none; }
+    #hero { padding: 0 2rem; }
+    #philosophy, #collection, #craftsmanship, #materials, #bespoke, #newsletter { padding: 6rem 2rem; }
+    .collection-header { flex-direction: column; align-items: flex-start; gap: 2rem; }
+    .collection-grid { grid-template-columns: 1fr; }
+    .footer-top { grid-template-columns: 1fr; gap: 3rem; }
+    .footer-bottom { flex-direction: column; gap: 1.5rem; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="loader-logo">AURUM</div>
+  <div class="loader-bar-track"><div class="loader-bar-fill" id="loaderBar"></div></div>
+  <div class="loader-text">Crafting Perfection</div>
+</div>
+
+<!-- CUSTOM CURSOR -->
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- ══════════════════ NAVIGATION ══════════════════ -->
+<nav id="navbar">
+  <a href="#" class="nav-logo">AURUM</a>
+  <ul class="nav-links">
+    <li><a href="#collection" data-text="Collection">Collection</a></li>
+    <li><a href="#craftsmanship" data-text="Craftsmanship">Craftsmanship</a></li>
+    <li><a href="#materials" data-text="Materials">Materials</a></li>
+    <li><a href="#bespoke" data-text="Bespoke">Bespoke</a></li>
+  </ul>
+  <button class="nav-cta"><span>Enquire Now</span></button>
+</nav>
+
+<!-- ══════════════════ HERO ══════════════════ -->
+<section id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-line-left"></div>
+  <div class="hero-line-right"></div>
+
+  <div class="hero-content">
+    <p class="hero-eyebrow">Established Geneva · 1886</p>
+    <h1 class="hero-title">
+      <span>THE ART OF</span>
+      <span>Timekeeping</span>
+      <span>PERFECTED</span>
+    </h1>
+    <p class="hero-sub">Where each second is sculpted by hand — an heirloom in motion</p>
+    <div class="hero-cta-group">
+      <a href="#collection" class="btn-primary"><span>Explore Collection</span></a>
+      <a href="#craftsmanship" class="btn-ghost">Our Craft</a>
+    </div>
+  </div>
+
+  <!-- Live Watch Face -->
+  <div class="watch-showcase">
+    <div class="watch-svg-wrap" id="heroWatch">
+      <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="caseGrad" cx="40%" cy="35%">
+            <stop offset="0%" stop-color="#d4a84b"/>
+            <stop offset="40%" stop-color="#8B6914"/>
+            <stop offset="100%" stop-color="#3d2f0a"/>
+          </radialGradient>
+          <radialGradient id="dialGrad" cx="50%" cy="50%">
+            <stop offset="0%" stop-color="#1c1c1e"/>
+            <stop offset="100%" stop-color="#0a0a0b"/>
+          </radialGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="2" result="blur"/>
+            <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+          </filter>
+        </defs>
+
+        <!-- Lugs -->
+        <rect x="128" y="12" width="44" height="30" rx="8" fill="url(#caseGrad)"/>
+        <rect x="128" y="258" width="44" height="30" rx="8" fill="url(#caseGrad)"/>
+        <!-- Crown -->
+        <rect x="274" y="136" width="20" height="28" rx="5" fill="url(#caseGrad)"/>
+
+        <!-- Strap top -->
+        <rect x="118" y="0" width="64" height="45" rx="12" fill="#2a1a05"/>
+        <!-- Strap bottom -->
+        <rect x="118" y="255" width="64" height="45" rx="12" fill="#2a1a05"/>
+        <!-- Strap buckle -->
+        <rect x="138" y="288" width="24" height="8" rx="2" fill="#C9A84C" opacity="0.7"/>
+
+        <!-- Case -->
+        <circle cx="150" cy="150" r="118" fill="url(#caseGrad)"/>
+        <circle cx="150" cy="150" r="112" fill="#0a0a0b"/>
+        <circle cx="150" cy="150" r="108" fill="url(#dialGrad)"/>
+
+        <!-- Dial ring -->
+        <circle cx="150" cy="150" r="106" fill="none" stroke="#C9A84C" stroke-width="0.5" opacity="0.5"/>
+        <circle cx="150" cy="150" r="95" fill="none" stroke="rgba(201,168,76,0.15)" stroke-width="0.5"/>
+
+        <!-- Hour markers -->
+        <g id="hourMarkers" fill="#C9A84C">
+          <!-- 12 -->
+          <rect x="147" y="48" width="6" height="18" rx="1"/>
+          <!-- 3 -->
+          <rect x="234" y="147" width="18" height="6" rx="1"/>
+          <!-- 6 -->
+          <rect x="147" y="234" width="6" height="18" rx="1"/>
+          <!-- 9 -->
+          <rect x="48" y="147" width="18" height="6" rx="1"/>
+        </g>
+
+        <!-- Minute markers (small dots) -->
+        <g id="minMarkers" fill="rgba(201,168,76,0.4)">
+          <circle cx="150" cy="52" r="1.5" transform="rotate(6, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(12, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(18, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(24, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(36, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(42, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(48, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(54, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(66, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(72, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(78, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(84, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(96, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(102, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(108, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(114, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(126, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(132, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(138, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(144, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(156, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(162, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(168, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(174, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(186, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(192, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(198, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(204, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(216, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(222, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(228, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(234, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(246, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(252, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(258, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(264, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(276, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(282, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(288, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(294, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(306, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(312, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(318, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(324, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(336, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(342, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(348, 150, 150)"/>
+          <circle cx="150" cy="52" r="1.5" transform="rotate(354, 150, 150)"/>
+        </g>
+
+        <!-- Brand text -->
+        <text x="150" y="128" text-anchor="middle" fill="#C9A84C" font-family="serif" font-size="11" letter-spacing="4">AURUM</text>
+        <text x="150" y="142" text-anchor="middle" fill="rgba(201,168,76,0.45)" font-family="serif" font-size="6" letter-spacing="2">GENÈVE</text>
+        <text x="150" y="185" text-anchor="middle" fill="rgba(201,168,76,0.3)" font-family="serif" font-size="6" letter-spacing="1.5">SWISS MADE</text>
+
+        <!-- Sub-dial at 6 -->
+        <circle cx="150" cy="210" r="18" fill="none" stroke="rgba(201,168,76,0.2)" stroke-width="0.7"/>
+        <line x1="150" y1="194" x2="150" y2="197" stroke="#C9A84C" stroke-width="0.8" opacity="0.5"/>
+        <line x1="150" y1="223" x2="150" y2="226" stroke="#C9A84C" stroke-width="0.8" opacity="0.5"/>
+        <line x1="134" y1="210" x2="137" y2="210" stroke="#C9A84C" stroke-width="0.8" opacity="0.5"/>
+        <line x1="163" y1="210" x2="166" y2="210" stroke="#C9A84C" stroke-width="0.8" opacity="0.5"/>
+        <line x1="150" y1="210" x2="150" y2="195" stroke="#E8C96B" stroke-width="1" id="subSecHand"/>
+
+        <!-- Hour hand -->
+        <line x1="150" y1="150" x2="150" y2="90" stroke="#E8C96B" stroke-width="4" stroke-linecap="round" id="hourHand"
+              style="transform-origin: 150px 150px"/>
+        <!-- Minute hand -->
+        <line x1="150" y1="150" x2="150" y2="68" stroke="#F0EBE1" stroke-width="3" stroke-linecap="round" id="minuteHand"
+              style="transform-origin: 150px 150px"/>
+        <!-- Second hand -->
+        <line x1="150" y1="150" x2="150" y2="58" stroke="#C9A84C" stroke-width="1.2" id="secondHand"
+              style="transform-origin: 150px 150px"/>
+        <line x1="150" y1="150" x2="150" y2="174" stroke="#C9A84C" stroke-width="1.2" id="secondTail"
+              style="transform-origin: 150px 150px"/>
+
+        <!-- Center jewel -->
+        <circle cx="150" cy="150" r="5" fill="#C9A84C"/>
+        <circle cx="150" cy="150" r="2.5" fill="#0a0a0b"/>
+        <circle cx="150" cy="150" r="1" fill="#C9A84C"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="scroll-indicator">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- ══════════════════ MARQUEE ══════════════════ -->
+<div class="marquee-strip">
+  <div class="marquee-inner">
+    <span>Haute Horlogerie</span><span class="sep">◆</span>
+    <span>Swiss Excellence</span><span class="sep">◆</span>
+    <span>138 Years of Mastery</span><span class="sep">◆</span>
+    <span>Hand-Engraved Movements</span><span class="sep">◆</span>
+    <span>Certified Chronometer</span><span class="sep">◆</span>
+    <span>Lifetime Guarantee</span><span class="sep">◆</span>
+    <span>Haute Horlogerie</span><span class="sep">◆</span>
+    <span>Swiss Excellence</span><span class="sep">◆</span>
+    <span>138 Years of Mastery</span><span class="sep">◆</span>
+    <span>Hand-Engraved Movements</span><span class="sep">◆</span>
+    <span>Certified Chronometer</span><span class="sep">◆</span>
+    <span>Lifetime Guarantee</span><span class="sep">◆</span>
+  </div>
+</div>
+
+<!-- ══════════════════ PHILOSOPHY ══════════════════ -->
+<section id="philosophy">
+  <div class="philosophy-text">
+    <div class="section-label reveal">
+      <span class="section-number">01</span>
+      Our Philosophy
+    </div>
+    <h2 class="philosophy-heading reveal">
+      Time is not just<br>measured — it is<br><em>Lived</em>
+    </h2>
+    <p class="philosophy-body reveal">
+      Since 1886, Aurum has pursued an unwavering ideal: that a timepiece is not merely an instrument, but a <strong>testament to human ingenuity</strong>. Each watch that leaves our atelier in Geneva carries within it thousands of hours of devotion — the life's work of our master watchmakers.
+    </p>
+    <div class="philosophy-stats reveal">
+      <div class="stat-item">
+        <span class="stat-number counter" data-target="138">0</span>
+        <span class="stat-label">Years Heritage</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number counter" data-target="847">0</span>
+        <span class="stat-label">Components per Watch</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number counter" data-target="12">0</span>
+        <span class="stat-label">Master Watchmakers</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ornamental Visual -->
+  <div class="philosophy-visual reveal-right">
+    <div class="ornament-ring">
+      <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" width="100%">
+        <!-- Outer ring with ticks -->
+        <circle cx="200" cy="200" r="190" fill="none" stroke="rgba(201,168,76,0.15)" stroke-width="1"/>
+        <!-- Tick marks -->
+        <g stroke="#C9A84C" stroke-width="1">
+          <line x1="200" y1="12" x2="200" y2="30" opacity="0.6"/>
+          <line x1="200" y1="12" x2="200" y2="30" opacity="0.6" transform="rotate(30,200,200)"/>
+          <line x1="200" y1="12" x2="200" y2="30" opacity="0.6" transform="rotate(60,200,200)"/>
+          <line x1="200" y1="12" x2="200" y2="30" opacity="0.6" transform="rotate(90,200,200)"/>
+          <line x1="200" y1="12" x2="200" y2="30" opacity="0.6" transform="rotate(120,200,200)"/>
+          <line x1="200" y1="12" x2="200" y2="30" opacity="0.6" transform="rotate(150,200,200)"/>
+          <line x1="200" y1="12" x2="200" y2="30" opacity="0.6" transform="rotate(180,200,200)"/>
+          <line x1="200" y1="12" x2="200" y2="30" opacity="0.6" transform="rotate(210,200,200)"/>
+          <line x1="200" y1="12" x2="200" y2="30" opacity="0.6" transform="rotate(240,200,200)"/>
+          <line x1="200" y1="12" x2="200" y2="30" opacity="0.6" transform="rotate(270,200,200)"/>
+          <line x1="200" y1="12" x2="200" y2="30" opacity="0.6" transform="rotate(300,200,200)"/>
+          <line x1="200" y1="12" x2="200" y2="30" opacity="0.6" transform="rotate(330,200,200)"/>
+        </g>
+        <!-- Decorative diamonds on ring -->
+        <polygon points="200,14 204,20 200,26 196,20" fill="#C9A84C" opacity="0.5" transform="rotate(45,200,200)"/>
+        <polygon points="200,14 204,20 200,26 196,20" fill="#C9A84C" opacity="0.5" transform="rotate(135,200,200)"/>
+        <polygon points="200,14 204,20 200,26 196,20" fill="#C9A84C" opacity="0.5" transform="rotate(225,200,200)"/>
+        <polygon points="200,14 204,20 200,26 196,20" fill="#C9A84C" opacity="0.5" transform="rotate(315,200,200)"/>
+        <!-- Inner ring -->
+        <circle cx="200" cy="200" r="155" fill="none" stroke="rgba(201,168,76,0.25)" stroke-width="0.5" stroke-dasharray="4 8"/>
+        <circle cx="200" cy="200" r="120" fill="none" stroke="rgba(201,168,76,0.1)" stroke-width="1"/>
+        <!-- Radial lines -->
+        <g stroke="rgba(201,168,76,0.08)" stroke-width="0.5">
+          <line x1="200" y1="80" x2="200" y2="320"/>
+          <line x1="80" y1="200" x2="320" y2="200"/>
+          <line x1="115" y1="115" x2="285" y2="285"/>
+          <line x1="285" y1="115" x2="115" y2="285"/>
+        </g>
+        <!-- Center text -->
+        <text x="200" y="190" text-anchor="middle" fill="#C9A84C" font-family="serif" font-size="28" letter-spacing="8" opacity="0.9">AURUM</text>
+        <text x="200" y="212" text-anchor="middle" fill="rgba(201,168,76,0.5)" font-family="serif" font-size="9" letter-spacing="4">GENÈVE · EST. 1886</text>
+        <!-- Small ornamental cross -->
+        <g fill="#C9A84C" opacity="0.4">
+          <rect x="197" y="228" width="6" height="1"/>
+          <rect x="199.5" y="225.5" width="1" height="6"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ COLLECTION ══════════════════ -->
+<section id="collection">
+  <div class="collection-header">
+    <div>
+      <div class="section-label reveal">
+        <span class="section-number">02</span>
+        Our Collections
+      </div>
+      <h2 class="collection-title reveal">
+        Masterworks in<br><em>Motion</em>
+      </h2>
+    </div>
+    <ul class="collection-filter reveal">
+      <li><button class="filter-btn active">All</button></li>
+      <li><button class="filter-btn">Dress</button></li>
+      <li><button class="filter-btn">Sport</button></li>
+      <li><button class="filter-btn">Tourbillon</button></li>
+    </ul>
+  </div>
+
+  <div class="collection-grid">
+
+    <!-- Card 1 — Featured -->
+    <div class="watch-card featured reveal">
+      <div class="watch-card-image">
+        <div class="watch-card-bg" style="background: radial-gradient(ellipse at 40% 30%, #1a1208 0%, #080806 100%);"></div>
+        <svg class="watch-card-svg" viewBox="0 0 260 320" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="rg1" cx="40%" cy="35%">
+              <stop offset="0%" stop-color="#E8C96B"/>
+              <stop offset="45%" stop-color="#C9A84C"/>
+              <stop offset="100%" stop-color="#5c3d0a"/>
+            </radialGradient>
+            <radialGradient id="dial1" cx="50%" cy="50%">
+              <stop offset="0%" stop-color="#1a1410"/>
+              <stop offset="100%" stop-color="#060504"/>
+            </radialGradient>
+          </defs>
+          <!-- Strap -->
+          <rect x="95" y="0" width="70" height="60" rx="14" fill="#1a0f03"/>
+          <rect x="95" y="260" width="70" height="60" rx="14" fill="#1a0f03"/>
+          <!-- Buckle -->
+          <rect x="115" y="295" width="30" height="10" rx="3" fill="#C9A84C" opacity="0.6"/>
+          <!-- Case -->
+          <circle cx="130" cy="160" r="115" fill="url(#rg1)"/>
+          <circle cx="130" cy="160" r="108" fill="#050504"/>
+          <circle cx="130" cy="160" r="103" fill="url(#dial1)"/>
+          <!-- Rings -->
+          <circle cx="130" cy="160" r="101" fill="none" stroke="#C9A84C" stroke-width="0.6" opacity="0.6"/>
+          <circle cx="130" cy="160" r="88" fill="none" stroke="rgba(201,168,76,0.2)" stroke-width="0.4"/>
+          <!-- Hour markers large -->
+          <rect x="127" y="63" width="6" height="20" rx="1" fill="#C9A84C"/>
+          <rect x="127" y="237" width="6" height="20" rx="1" fill="#C9A84C"/>
+          <rect x="217" y="157" width="20" height="6" rx="1" fill="#C9A84C"/>
+          <rect x="33" y="157" width="20" height="6" rx="1" fill="#C9A84C"/>
+          <!-- Minor markers -->
+          <rect x="128.5" y="66" width="3" height="10" fill="rgba(201,168,76,0.4)" transform="rotate(30,130,160)"/>
+          <rect x="128.5" y="66" width="3" height="10" fill="rgba(201,168,76,0.4)" transform="rotate(60,130,160)"/>
+          <rect x="128.5" y="66" width="3" height="10" fill="rgba(201,168,76,0.4)" transform="rotate(120,130,160)"/>
+          <rect x="128.5" y="66" width="3" height="10" fill="rgba(201,168,76,0.4)" transform="rotate(150,130,160)"/>
+          <rect x="128.5" y="66" width="3" height="10" fill="rgba(201,168,76,0.4)" transform="rotate(210,130,160)"/>
+          <rect x="128.5" y="66" width="3" height="10" fill="rgba(201,168,76,0.4)" transform="rotate(240,130,160)"/>
+          <rect x="128.5" y="66" width="3" height="10" fill="rgba(201,168,76,0.4)" transform="rotate(300,130,160)"/>
+          <rect x="128.5" y="66" width="3" height="10" fill="rgba(201,168,76,0.4)" transform="rotate(330,130,160)"/>
+          <!-- Brand -->
+          <text x="130" y="138" text-anchor="middle" fill="#C9A84C" font-family="serif" font-size="11" letter-spacing="5">AURUM</text>
+          <text x="130" y="152" text-anchor="middle" fill="rgba(201,168,76,0.4)" font-family="serif" font-size="6" letter-spacing="2">GENÈVE</text>
+          <!-- Complication at 9 -->
+          <circle cx="96" cy="160" r="16" fill="none" stroke="rgba(201,168,76,0.25)" stroke-width="0.6"/>
+          <text x="96" y="163.5" text-anchor="middle" fill="rgba(201,168,76,0.5)" font-family="serif" font-size="6" letter-spacing="0.5">MOON</text>
+          <!-- Moon phase -->
+          <circle cx="96" cy="154" r="6" fill="#1a1408"/>
+          <circle cx="100" cy="154" r="5" fill="#0a0906"/>
+          <!-- Power reserve at 3 -->
+          <path d="M166,155 A10,10 0 0,1 178,155" fill="none" stroke="rgba(201,168,76,0.25)" stroke-width="0.6"/>
+          <path d="M166,165 A10,10 0 0,0 178,165" fill="none" stroke="rgba(201,168,76,0.25)" stroke-width="0.6"/>
+          <text x="172" y="161.5" text-anchor="middle" fill="rgba(201,168,76,0.5)" font-family="serif" font-size="4.5">PWR</text>
+          <!-- Hands -->
+          <line x1="130" y1="160" x2="130" y2="100" stroke="#E8C96B" stroke-width="5" stroke-linecap="round"/>
+          <line x1="130" y1="160" x2="130" y2="78" stroke="#F0EBE1" stroke-width="3.5" stroke-linecap="round" transform="rotate(40,130,160)"/>
+          <line x1="130" y1="160" x2="130" y2="68" stroke="#C9A84C" stroke-width="1.5" transform="rotate(-22,130,160)"/>
+          <!-- Center -->
+          <circle cx="130" cy="160" r="5.5" fill="#C9A84C"/>
+          <circle cx="130" cy="160" r="2.5" fill="#060504"/>
+        </svg>
+      </div>
+      <div class="watch-card-info">
+        <div class="watch-card-collection">Tourbillon Perpetual</div>
+        <div class="watch-card-name">Élysée Perpétuel</div>
+        <div class="watch-card-desc">A hand-wound masterpiece with perpetual calendar, moon phase, and power reserve indicator. 847 components assembled over 2,200 hours.</div>
+        <div class="watch-card-footer">
+          <div class="watch-price">
+            <span>From</span>
+            CHF 148,000
+          </div>
+          <button class="watch-add-btn">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="watch-card reveal">
+      <div class="watch-card-image">
+        <div class="watch-card-bg" style="background: radial-gradient(ellipse at 50% 20%, #0d1018 0%, #060608 100%);"></div>
+        <svg class="watch-card-svg" viewBox="0 0 220 270" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="rg2" cx="35%" cy="30%">
+              <stop offset="0%" stop-color="#c8c8c8"/>
+              <stop offset="50%" stop-color="#888"/>
+              <stop offset="100%" stop-color="#2a2a2a"/>
+            </radialGradient>
+            <radialGradient id="dial2" cx="50%" cy="50%">
+              <stop offset="0%" stop-color="#0d1520"/>
+              <stop offset="100%" stop-color="#040810"/>
+            </radialGradient>
+          </defs>
+          <rect x="80" y="0" width="60" height="45" rx="12" fill="#1a1a1f"/>
+          <rect x="80" y="225" width="60" height="45" rx="12" fill="#1a1a1f"/>
+          <circle cx="110" cy="135" r="98" fill="url(#rg2)"/>
+          <circle cx="110" cy="135" r="92" fill="#050810"/>
+          <circle cx="110" cy="135" r="87" fill="url(#dial2)"/>
+          <circle cx="110" cy="135" r="85" fill="none" stroke="#C9A84C" stroke-width="0.5" opacity="0.5"/>
+          <!-- Sector subdials -->
+          <circle cx="110" cy="105" r="20" fill="none" stroke="rgba(201,168,76,0.2)" stroke-width="0.5"/>
+          <circle cx="84" cy="145" r="20" fill="none" stroke="rgba(201,168,76,0.2)" stroke-width="0.5"/>
+          <circle cx="136" cy="145" r="20" fill="none" stroke="rgba(201,168,76,0.2)" stroke-width="0.5"/>
+          <text x="110" y="108" text-anchor="middle" fill="rgba(201,168,76,0.45)" font-family="serif" font-size="5">1/10s</text>
+          <text x="84" y="148" text-anchor="middle" fill="rgba(201,168,76,0.45)" font-family="serif" font-size="5">MIN</text>
+          <text x="136" y="148" text-anchor="middle" fill="rgba(201,168,76,0.45)" font-family="serif" font-size="5">HOUR</text>
+          <text x="110" y="123" text-anchor="middle" fill="#C9A84C" font-family="serif" font-size="9" letter-spacing="4">AURUM</text>
+          <text x="110" y="167" text-anchor="middle" fill="rgba(201,168,76,0.35)" font-family="serif" font-size="5" letter-spacing="1.5">SWISS MADE</text>
+          <!-- Hour markers -->
+          <rect x="107.5" y="52" width="5" height="14" rx="0.5" fill="#C9A84C"/>
+          <rect x="107.5" y="205" width="5" height="14" rx="0.5" fill="#C9A84C"/>
+          <rect x="195" y="132.5" width="14" height="5" rx="0.5" fill="#C9A84C"/>
+          <rect x="21" y="132.5" width="14" height="5" rx="0.5" fill="#C9A84C"/>
+          <!-- Chrono hand -->
+          <line x1="110" y1="135" x2="110" y2="55" stroke="#ff4444" stroke-width="1.5" stroke-linecap="round" transform="rotate(-30,110,135)"/>
+          <line x1="110" y1="135" x2="110" y2="92" stroke="#E8C96B" stroke-width="4" stroke-linecap="round" transform="rotate(25,110,135)"/>
+          <line x1="110" y1="135" x2="110" y2="62" stroke="rgba(240,235,225,0.9)" stroke-width="2.5" stroke-linecap="round" transform="rotate(80,110,135)"/>
+          <circle cx="110" cy="135" r="5" fill="#C9A84C"/>
+          <circle cx="110" cy="135" r="2" fill="#040810"/>
+          <!-- Pusher buttons -->
+          <rect x="198" y="118" width="16" height="10" rx="3" fill="url(#rg2)"/>
+          <rect x="198" y="132" width="16" height="10" rx="3" fill="url(#rg2)"/>
+        </svg>
+      </div>
+      <div class="watch-card-info">
+        <div class="watch-card-collection">Sport Chronograph</div>
+        <div class="watch-card-name">Vélocité I</div>
+        <div class="watch-card-desc">Column-wheel chronograph in steel. Tri-compax layout, 72-hour power reserve. Water-resistant to 300m.</div>
+        <div class="watch-card-footer">
+          <div class="watch-price">
+            <span>From</span>
+            CHF 28,500
+          </div>
+          <button class="watch-add-btn">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3 -->
+    <div class="watch-card reveal">
+      <div class="watch-card-image">
+        <div class="watch-card-bg" style="background: radial-gradient(ellipse at 60% 25%, #180a02 0%, #080502 100%);"></div>
+        <svg class="watch-card-svg" viewBox="0 0 220 270" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="rg3" cx="38%" cy="32%">
+              <stop offset="0%" stop-color="#d4a84b"/>
+              <stop offset="50%" stop-color="#8B6914"/>
+              <stop offset="100%" stop-color="#3a2805"/>
+            </radialGradient>
+            <radialGradient id="dial3" cx="50%" cy="50%">
+              <stop offset="0%" stop-color="#2a1a08"/>
+              <stop offset="100%" stop-color="#100a02"/>
+            </radialGradient>
+          </defs>
+          <rect x="80" y="0" width="60" height="45" rx="12" fill="#1f0f02"/>
+          <rect x="80" y="225" width="60" height="45" rx="12" fill="#1f0f02"/>
+          <circle cx="110" cy="135" r="98" fill="url(#rg3)"/>
+          <circle cx="110" cy="135" r="92" fill="#100a02"/>
+          <circle cx="110" cy="135" r="87" fill="url(#dial3)"/>
+          <circle cx="110" cy="135" r="85" fill="none" stroke="#C9A84C" stroke-width="0.8" opacity="0.7"/>
+          <circle cx="110" cy="135" r="75" fill="none" stroke="rgba(201,168,76,0.15)" stroke-width="0.4"/>
+          <!-- Guilloché pattern hint -->
+          <circle cx="110" cy="135" r="65" fill="none" stroke="rgba(201,168,76,0.08)" stroke-width="0.3"/>
+          <circle cx="110" cy="135" r="55" fill="none" stroke="rgba(201,168,76,0.06)" stroke-width="0.3"/>
+          <circle cx="110" cy="135" r="45" fill="none" stroke="rgba(201,168,76,0.05)" stroke-width="0.3"/>
+          <!-- applied hour indices, leaf-style -->
+          <ellipse cx="110" cy="52" rx="4" ry="10" fill="#C9A84C"/>
+          <ellipse cx="110" cy="218" rx="4" ry="10" fill="#C9A84C"/>
+          <ellipse cx="193" cy="135" rx="10" ry="4" fill="#C9A84C"/>
+          <ellipse cx="27" cy="135" rx="10" ry="4" fill="#C9A84C"/>
+          <!-- Small applied hour markers -->
+          <rect x="108" y="58" width="4" height="10" rx="1" fill="#C9A84C" opacity="0.5" transform="rotate(30,110,135)"/>
+          <rect x="108" y="58" width="4" height="10" rx="1" fill="#C9A84C" opacity="0.5" transform="rotate(60,110,135)"/>
+          <rect x="108" y="58" width="4" height="10" rx="1" fill="#C9A84C" opacity="0.5" transform="rotate(120,110,135)"/>
+          <rect x="108" y="58" width="4" height="10" rx="1" fill="#C9A84C" opacity="0.5" transform="rotate(150,110,135)"/>
+          <rect x="108" y="58" width="4" height="10" rx="1" fill="#C9A84C" opacity="0.5" transform="rotate(210,110,135)"/>
+          <rect x="108" y="58" width="4" height="10" rx="1" fill="#C9A84C" opacity="0.5" transform="rotate(240,110,135)"/>
+          <rect x="108" y="58" width="4" height="10" rx="1" fill="#C9A84C" opacity="0.5" transform="rotate(300,110,135)"/>
+          <rect x="108" y="58" width="4" height="10" rx="1" fill="#C9A84C" opacity="0.5" transform="rotate(330,110,135)"/>
+          <!-- Brand -->
+          <text x="110" y="116" text-anchor="middle" fill="#C9A84C" font-family="serif" font-size="9" letter-spacing="4">AURUM</text>
+          <text x="110" y="128" text-anchor="middle" fill="rgba(201,168,76,0.4)" font-family="serif" font-size="5" letter-spacing="1.5">GENÈVE</text>
+          <text x="110" y="170" text-anchor="middle" fill="rgba(201,168,76,0.3)" font-family="serif" font-size="5" letter-spacing="1.5">SWISS MADE</text>
+          <!-- Leaf hands -->
+          <path d="M108,135 L107,100 C107.5,88 112.5,88 113,100 L112,135Z" fill="#E8C96B"/>
+          <path d="M109.2,135 L108,90 C108.5,74 111.5,74 112,90 L110.8,135Z" fill="#F0EBE1" transform="rotate(50,110,135)"/>
+          <line x1="110" y1="135" x2="110" y2="62" stroke="#C9A84C" stroke-width="1" transform="rotate(-10,110,135)"/>
+          <line x1="110" y1="135" x2="110" y2="162" stroke="#C9A84C" stroke-width="1" transform="rotate(-10,110,135)"/>
+          <circle cx="110" cy="135" r="5" fill="#C9A84C"/>
+          <circle cx="110" cy="135" r="2" fill="#100a02"/>
+        </svg>
+      </div>
+      <div class="watch-card-info">
+        <div class="watch-card-collection">Dress Collection</div>
+        <div class="watch-card-name">Lumière Classique</div>
+        <div class="watch-card-desc">A thin dress watch of just 5.4mm. Hand-guilloché sunburst dial in cognac lacquer, leaf-style gold hands, sapphire caseback.</div>
+        <div class="watch-card-footer">
+          <div class="watch-price">
+            <span>From</span>
+            CHF 42,000
+          </div>
+          <button class="watch-add-btn">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 4 -->
+    <div class="watch-card reveal">
+      <div class="watch-card-image">
+        <div class="watch-card-bg" style="background: radial-gradient(ellipse at 50% 30%, #100810 0%, #060406 100%);"></div>
+        <svg class="watch-card-svg" viewBox="0 0 220 270" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="rg4" cx="40%" cy="35%">
+              <stop offset="0%" stop-color="#1a1a1a"/>
+              <stop offset="45%" stop-color="#0d0d0d"/>
+              <stop offset="100%" stop-color="#060606"/>
+            </radialGradient>
+            <radialGradient id="dial4" cx="50%" cy="50%">
+              <stop offset="0%" stop-color="#181018"/>
+              <stop offset="100%" stop-color="#0a080a"/>
+            </radialGradient>
+          </defs>
+          <rect x="80" y="0" width="60" height="45" rx="12" fill="#0d0d0d"/>
+          <rect x="80" y="225" width="60" height="45" rx="12" fill="#0d0d0d"/>
+          <circle cx="110" cy="135" r="98" fill="url(#rg4)"/>
+          <circle cx="110" cy="135" r="92" fill="#080408"/>
+          <circle cx="110" cy="135" r="87" fill="url(#dial4)"/>
+          <!-- Gold accents only -->
+          <circle cx="110" cy="135" r="85" fill="none" stroke="#C9A84C" stroke-width="1" opacity="0.4"/>
+          <!-- Tourbillon cage hint at 6 -->
+          <circle cx="110" cy="198" r="22" fill="none" stroke="rgba(201,168,76,0.3)" stroke-width="0.6"/>
+          <circle cx="110" cy="198" r="16" fill="none" stroke="rgba(201,168,76,0.2)" stroke-width="0.4"/>
+          <!-- Tourbillon spokes -->
+          <line x1="110" y1="180" x2="110" y2="216" stroke="rgba(201,168,76,0.25)" stroke-width="0.5"/>
+          <line x1="93" y1="198" x2="127" y2="198" stroke="rgba(201,168,76,0.25)" stroke-width="0.5"/>
+          <line x1="98" y1="184" x2="122" y2="212" stroke="rgba(201,168,76,0.15)" stroke-width="0.5"/>
+          <line x1="122" y1="184" x2="98" y2="212" stroke="rgba(201,168,76,0.15)" stroke-width="0.5"/>
+          <circle cx="110" cy="198" r="6" fill="none" stroke="#C9A84C" stroke-width="0.8" opacity="0.5"/>
+          <circle cx="110" cy="198" r="2" fill="#C9A84C" opacity="0.4"/>
+          <!-- Hour markers (Arabic numerals style - simple lines) -->
+          <rect x="107.5" y="52" width="5" height="16" rx="0.5" fill="#C9A84C" opacity="0.8"/>
+          <rect x="107.5" y="151" width="5" height="16" rx="0.5" fill="#C9A84C" opacity="0.8"/>
+          <rect x="192" y="132.5" width="16" height="5" rx="0.5" fill="#C9A84C" opacity="0.8"/>
+          <rect x="22" y="132.5" width="16" height="5" rx="0.5" fill="#C9A84C" opacity="0.8"/>
+          <!-- Brand -->
+          <text x="110" y="105" text-anchor="middle" fill="#C9A84C" font-family="serif" font-size="9" letter-spacing="4">AURUM</text>
+          <text x="110" y="118" text-anchor="middle" fill="rgba(201,168,76,0.35)" font-family="serif" font-size="5.5" letter-spacing="1">TOURBILLON</text>
+          <!-- Skeleton-style hands -->
+          <path d="M109,135 L108,88 L110,80 L112,88 L111,135Z" fill="none" stroke="#C9A84C" stroke-width="1"/>
+          <path d="M108.5,135 L107.5,74 L110,64 L112.5,74 L111.5,135Z" fill="none" stroke="#F0EBE1" stroke-width="0.8" transform="rotate(135,110,135)"/>
+          <circle cx="110" cy="135" r="5" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
+          <circle cx="110" cy="135" r="2" fill="#C9A84C"/>
+        </svg>
+      </div>
+      <div class="watch-card-info">
+        <div class="watch-card-collection">Grand Complication</div>
+        <div class="watch-card-name">Tourbillon Noir</div>
+        <div class="watch-card-desc">Flying tourbillon at 6 o'clock, skeletonised bridges in blackened gold. A window into the soul of haute horlogerie.</div>
+        <div class="watch-card-footer">
+          <div class="watch-price">
+            <span>From</span>
+            CHF 320,000
+          </div>
+          <button class="watch-add-btn">+</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════ CRAFTSMANSHIP ══════════════════ -->
+<section id="craftsmanship">
+  <div class="craft-inner">
+    <div class="craft-visual">
+      <div class="craft-image-frame">
+        <div class="craft-image-inner">
+          <!-- Gear mechanism illustration -->
+          <svg viewBox="0 0 400 500" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <rect width="400" height="500" fill="#1a1a1c"/>
+            <!-- Ambient glow -->
+            <radialGradient id="gearGlow" cx="50%" cy="45%">
+              <stop offset="0%" stop-color="rgba(201,168,76,0.15)"/>
+              <stop offset="100%" stop-color="transparent"/>
+            </radialGradient>
+            <ellipse cx="200" cy="230" rx="200" ry="200" fill="url(#gearGlow)"/>
+
+            <!-- Large main gear -->
+            <g transform="translate(200,230)" id="mainGear">
+              <circle r="80" fill="none" stroke="rgba(201,168,76,0.15)" stroke-width="1"/>
+              <circle r="72" fill="rgba(201,168,76,0.04)" stroke="rgba(201,168,76,0.2)" stroke-width="0.8"/>
+              <!-- Gear teeth (simplified as rect marks around perimeter) -->
+              <g stroke="#C9A84C" stroke-width="1.5" opacity="0.5">
+                <line x1="0" y1="-80" x2="0" y2="-92" transform="rotate(0)"/>
+                <line x1="0" y1="-80" x2="0" y2="-92" transform="rotate(15)"/>
+                <line x1="0" y1="-80" x2="0" y2="-92" transform="rotate(30)"/>
+                <line x1="0" y1="-80" x2="0" y2="-92" transform="rotate(45)"/>
+                <line x1="0" y1="-80" x2="0" y2="-92" transform="rotate(60)"/>
+                <line x1="0" y1="-80" x2="0" y2="-92" transform="rotate(75)"/>
+                <line x1="0" y1="-80" x2="0" y2="-92" transform="rotate(90)"/>
+                <line x1="0" y1="-80" x2="0" y2="-92" transform="rotate(105)"/>
+                <line x1="0" y1="-80" x2="0" y2="-92" transform="rotate(120)"/>
+                <line x1="0" y1="-80" x2="0" y2="-92" transform="rotate(135)"/>
+                <line x1="0" y1="-80" x2="0" y2="-92" transform="rotate(150)"/>
+                <line x1="0" y1="-80" x2="0" y2="-92" transform="rotate(165)"/>
+                <line x1="0" y1="-80" x2="0" y2="-92" transform="rotate(180)"/>
+                <line x1="0" y1="-80" x2="0" y2="-92" transform="rotate(195)"/>
+                <line x1="0" y1="-80" x2="0" y2="-92" transform="rotate(210)"/>
+                <line x1="0" y1="-80" x2="0" y2="-92" transform="rotate(225)"/>
+                <line x1="0" y1="-80" x2="0" y2="-92" transform="rotate(240)"/>
+                <line x1="0" y1="-80" x2="0" y2="-92" transform="rotate(255)"/>
+                <line x1="0" y1="-80" x2="0" y2="-92" transform="rotate(270)"/>
+                <line x1="0" y1="-80" x2="0" y2="-92" transform="rotate(285)"/>
+                <line x1="0" y1="-80" x2="0" y2="-92" transform="rotate(300)"/>
+                <line x1="0" y1="-80" x2="0" y2="-92" transform="rotate(315)"/>
+                <line x1="0" y1="-80" x2="0" y2="-92" transform="rotate(330)"/>
+                <line x1="0" y1="-80" x2="0" y2="-92" transform="rotate(345)"/>
+              </g>
+              <!-- Spoke pattern -->
+              <g stroke="rgba(201,168,76,0.3)" stroke-width="0.6">
+                <line x1="0" y1="-65" x2="0" y2="65"/>
+                <line x1="-65" y1="0" x2="65" y2="0"/>
+                <line x1="-46" y1="-46" x2="46" y2="46"/>
+                <line x1="46" y1="-46" x2="-46" y2="46"/>
+              </g>
+              <circle r="18" fill="rgba(201,168,76,0.06)" stroke="rgba(201,168,76,0.3)" stroke-width="0.8"/>
+              <circle r="6" fill="#C9A84C" opacity="0.5"/>
+              <circle r="2" fill="#C9A84C"/>
+            </g>
+
+            <!-- Small gear top-right -->
+            <g transform="translate(290,150)" id="smallGear1">
+              <circle r="35" fill="rgba(201,168,76,0.03)" stroke="rgba(201,168,76,0.2)" stroke-width="0.6"/>
+              <g stroke="rgba(201,168,76,0.4)" stroke-width="1">
+                <line x1="0" y1="-35" x2="0" y2="-42" transform="rotate(0)"/>
+                <line x1="0" y1="-35" x2="0" y2="-42" transform="rotate(22.5)"/>
+                <line x1="0" y1="-35" x2="0" y2="-42" transform="rotate(45)"/>
+                <line x1="0" y1="-35" x2="0" y2="-42" transform="rotate(67.5)"/>
+                <line x1="0" y1="-35" x2="0" y2="-42" transform="rotate(90)"/>
+                <line x1="0" y1="-35" x2="0" y2="-42" transform="rotate(112.5)"/>
+                <line x1="0" y1="-35" x2="0" y2="-42" transform="rotate(135)"/>
+                <line x1="0" y1="-35" x2="0" y2="-42" transform="rotate(157.5)"/>
+                <line x1="0" y1="-35" x2="0" y2="-42" transform="rotate(180)"/>
+                <line x1="0" y1="-35" x2="0" y2="-42" transform="rotate(202.5)"/>
+                <line x1="0" y1="-35" x2="0" y2="-42" transform="rotate(225)"/>
+                <line x1="0" y1="-35" x2="0" y2="-42" transform="rotate(247.5)"/>
+                <line x1="0" y1="-35" x2="0" y2="-42" transform="rotate(270)"/>
+                <line x1="0" y1="-35" x2="0" y2="-42" transform="rotate(292.5)"/>
+                <line x1="0" y1="-35" x2="0" y2="-42" transform="rotate(315)"/>
+                <line x1="0" y1="-35" x2="0" y2="-42" transform="rotate(337.5)"/>
+              </g>
+              <g stroke="rgba(201,168,76,0.2)" stroke-width="0.5">
+                <line x1="0" y1="-25" x2="0" y2="25"/>
+                <line x1="-25" y1="0" x2="25" y2="0"/>
+                <line x1="-18" y1="-18" x2="18" y2="18"/>
+                <line x1="18" y1="-18" x2="-18" y2="18"/>
+              </g>
+              <circle r="8" fill="rgba(201,168,76,0.06)" stroke="rgba(201,168,76,0.2)" stroke-width="0.6"/>
+              <circle r="2.5" fill="#C9A84C" opacity="0.6"/>
+            </g>
+
+            <!-- Small gear left -->
+            <g transform="translate(110,310)" id="smallGear2">
+              <circle r="40" fill="rgba(201,168,76,0.03)" stroke="rgba(201,168,76,0.15)" stroke-width="0.6"/>
+              <g stroke="rgba(201,168,76,0.35)" stroke-width="1">
+                <line x1="0" y1="-40" x2="0" y2="-48" transform="rotate(0)"/>
+                <line x1="0" y1="-40" x2="0" y2="-48" transform="rotate(18)"/>
+                <line x1="0" y1="-40" x2="0" y2="-48" transform="rotate(36)"/>
+                <line x1="0" y1="-40" x2="0" y2="-48" transform="rotate(54)"/>
+                <line x1="0" y1="-40" x2="0" y2="-48" transform="rotate(72)"/>
+                <line x1="0" y1="-40" x2="0" y2="-48" transform="rotate(90)"/>
+                <line x1="0" y1="-40" x2="0" y2="-48" transform="rotate(108)"/>
+                <line x1="0" y1="-40" x2="0" y2="-48" transform="rotate(126)"/>
+                <line x1="0" y1="-40" x2="0" y2="-48" transform="rotate(144)"/>
+                <line x1="0" y1="-40" x2="0" y2="-48" transform="rotate(162)"/>
+                <line x1="0" y1="-40" x2="0" y2="-48" transform="rotate(180)"/>
+                <line x1="0" y1="-40" x2="0" y2="-48" transform="rotate(198)"/>
+                <line x1="0" y1="-40" x2="0" y2="-48" transform="rotate(216)"/>
+                <line x1="0" y1="-40" x2="0" y2="-48" transform="rotate(234)"/>
+                <line x1="0" y1="-40" x2="0" y2="-48" transform="rotate(252)"/>
+                <line x1="0" y1="-40" x2="0" y2="-48" transform="rotate(270)"/>
+                <line x1="0" y1="-40" x2="0" y2="-48" transform="rotate(288)"/>
+                <line x1="0" y1="-40" x2="0" y2="-48" transform="rotate(306)"/>
+                <line x1="0" y1="-40" x2="0" y2="-48" transform="rotate(324)"/>
+                <line x1="0" y1="-40" x2="0" y2="-48" transform="rotate(342)"/>
+              </g>
+              <circle r="10" fill="rgba(201,168,76,0.06)" stroke="rgba(201,168,76,0.2)" stroke-width="0.6"/>
+              <circle r="3" fill="#C9A84C" opacity="0.5"/>
+            </g>
+
+            <!-- Decorative text -->
+            <text x="200" y="430" text-anchor="middle" fill="rgba(201,168,76,0.2)" font-family="serif" font-size="9" letter-spacing="4">CALIBRE AUR-1886</text>
+            <text x="200" y="445" text-anchor="middle" fill="rgba(201,168,76,0.12)" font-family="serif" font-size="6" letter-spacing="2">HAND-ASSEMBLED · GENÈVE</text>
+
+            <!-- Escape wheel hint -->
+            <g transform="translate(200,100)">
+              <circle r="25" fill="none" stroke="rgba(201,168,76,0.2)" stroke-width="0.5"/>
+              <g stroke="rgba(201,168,76,0.3)" stroke-width="1">
+                <line x1="0" y1="-25" x2="0" y2="-30" transform="rotate(0)"/>
+                <line x1="0" y1="-25" x2="0" y2="-30" transform="rotate(36)"/>
+                <line x1="0" y1="-25" x2="0" y2="-30" transform="rotate(72)"/>
+                <line x1="0" y1="-25" x2="0" y2="-30" transform="rotate(108)"/>
+                <line x1="0" y1="-25" x2="0" y2="-30" transform="rotate(144)"/>
+                <line x1="0" y1="-25" x2="0" y2="-30" transform="rotate(180)"/>
+                <line x1="0" y1="-25" x2="0" y2="-30" transform="rotate(216)"/>
+                <line x1="0" y1="-25" x2="0" y2="-30" transform="rotate(252)"/>
+                <line x1="0" y1="-25" x2="0" y2="-30" transform="rotate(288)"/>
+                <line x1="0" y1="-25" x2="0" y2="-30" transform="rotate(324)"/>
+              </g>
+              <circle r="5" fill="none" stroke="rgba(201,168,76,0.25)" stroke-width="0.5"/>
+              <circle r="1.5" fill="#C9A84C" opacity="0.5"/>
+            </g>
+          </svg>
+        </div>
+
+        <div class="craft-gold-accent">
+          <div class="craft-gold-text">
+            Calibre<br>AUR-1886<br>——<br>847 Parts<br>Hand Assembled
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="craft-content">
+      <div class="section-label reveal">
+        <span class="section-number">03</span>
+        The Art of Making
+      </div>
+      <h2 class="craft-heading reveal">
+        <em>Every detail</em><br>demands a<br>lifetime
+      </h2>
+      <ol class="craft-steps">
+        <li class="craft-step reveal">
+          <span class="craft-step-num">01</span>
+          <div>
+            <div class="craft-step-title">Movement Design</div>
+            <p class="craft-step-text">Our engineers design each calibre from scratch. The AUR-1886 took eleven years of development — a movement that reflects our founding year.</p>
+          </div>
+        </li>
+        <li class="craft-step reveal">
+          <span class="craft-step-num">02</span>
+          <div>
+            <div class="craft-step-title">Anglage & Bevelling</div>
+            <p class="craft-step-text">Each component is hand-bevelled and polished under 30× magnification. A single bridge can take eight hours to finish to Côtes de Genève standards.</p>
+          </div>
+        </li>
+        <li class="craft-step reveal">
+          <span class="craft-step-num">03</span>
+          <div>
+            <div class="craft-step-title">Dial Engraving</div>
+            <p class="craft-step-text">Our engravers are among only fourteen master artisans globally who still practise hand-guilloché. Each dial takes up to four weeks.</p>
+          </div>
+        </li>
+        <li class="craft-step reveal">
+          <span class="craft-step-num">04</span>
+          <div>
+            <div class="craft-step-title">COSC Certification</div>
+            <p class="craft-step-text">Every movement completes 16 days of rigorous position and temperature testing. We exceed the official chronometer benchmark by 40%.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ MATERIALS ══════════════════ -->
+<section id="materials">
+  <div class="materials-header">
+    <div class="section-label reveal" style="justify-content:center">
+      <span class="section-number">04</span>
+      Raw Excellence
+    </div>
+    <h2 class="materials-heading reveal">The Finest Materials</h2>
+    <p class="materials-sub reveal">Sourced from the world's most uncompromising suppliers</p>
+  </div>
+
+  <div class="materials-grid">
+    <!-- Sapphire Crystal -->
+    <div class="material-card">
+      <div class="material-bg">
+        <svg viewBox="0 0 300 400" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="sapphireGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#0a0520"/>
+              <stop offset="40%" stop-color="#0d0a35"/>
+              <stop offset="100%" stop-color="#050215"/>
+            </linearGradient>
+            <radialGradient id="sapphireGlow" cx="40%" cy="35%">
+              <stop offset="0%" stop-color="rgba(100,80,200,0.3)"/>
+              <stop offset="100%" stop-color="transparent"/>
+            </radialGradient>
+          </defs>
+          <rect width="300" height="400" fill="url(#sapphireGrad)"/>
+          <rect width="300" height="400" fill="url(#sapphireGlow)"/>
+          <!-- Crystal facets -->
+          <polygon points="150,40 240,120 240,280 150,360 60,280 60,120" fill="none" stroke="rgba(150,130,255,0.2)" stroke-width="1"/>
+          <polygon points="150,40 240,120 150,200 60,120" fill="rgba(100,80,200,0.06)"/>
+          <polygon points="150,200 240,120 240,280 150,360" fill="rgba(80,60,180,0.04)"/>
+          <polygon points="150,200 150,360 60,280 60,120" fill="rgba(120,100,220,0.04)"/>
+          <!-- Light refraction lines -->
+          <line x1="150" y1="40" x2="150" y2="360" stroke="rgba(200,180,255,0.08)" stroke-width="0.5"/>
+          <line x1="60" y1="120" x2="240" y2="280" stroke="rgba(200,180,255,0.06)" stroke-width="0.5"/>
+          <line x1="240" y1="120" x2="60" y2="280" stroke="rgba(200,180,255,0.06)" stroke-width="0.5"/>
+          <!-- Highlight -->
+          <ellipse cx="120" cy="110" rx="30" ry="15" fill="rgba(255,255,255,0.06)" transform="rotate(-30,120,110)"/>
+        </svg>
+      </div>
+      <div class="material-border"></div>
+      <div class="material-overlay"></div>
+      <div class="material-info">
+        <div class="material-name">Sapphire Crystal</div>
+        <div class="material-origin">Mohs Hardness: 9 · Anti-Reflective</div>
+        <div class="material-desc">Laboratory-grown sapphire, harder than any mineral except diamond. Triple-coated anti-reflective treatment for absolute legibility.</div>
+      </div>
+    </div>
+
+    <!-- 18K Gold -->
+    <div class="material-card">
+      <div class="material-bg">
+        <svg viewBox="0 0 300 400" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="goldGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#2a1a04"/>
+              <stop offset="40%" stop-color="#1a1004"/>
+              <stop offset="100%" stop-color="#0d0902"/>
+            </linearGradient>
+            <radialGradient id="goldGlow2" cx="50%" cy="40%">
+              <stop offset="0%" stop-color="rgba(201,168,76,0.25)"/>
+              <stop offset="100%" stop-color="transparent"/>
+            </radialGradient>
+          </defs>
+          <rect width="300" height="400" fill="url(#goldGrad2)"/>
+          <rect width="300" height="400" fill="url(#goldGlow2)"/>
+          <!-- Gold ingot shape -->
+          <rect x="70" y="120" width="160" height="100" rx="4" fill="none" stroke="rgba(201,168,76,0.25)" stroke-width="1"/>
+          <rect x="80" y="130" width="140" height="80" rx="2" fill="rgba(201,168,76,0.06)"/>
+          <!-- Surface grain texture hint -->
+          <g stroke="rgba(201,168,76,0.08)" stroke-width="0.3">
+            <line x1="70" y1="135" x2="230" y2="135"/>
+            <line x1="70" y1="145" x2="230" y2="145"/>
+            <line x1="70" y1="155" x2="230" y2="155"/>
+            <line x1="70" y1="165" x2="230" y2="165"/>
+            <line x1="70" y1="175" x2="230" y2="175"/>
+            <line x1="70" y1="185" x2="230" y2="185"/>
+            <line x1="70" y1="195" x2="230" y2="195"/>
+            <line x1="70" y1="205" x2="230" y2="205"/>
+          </g>
+          <text x="150" y="175" text-anchor="middle" fill="rgba(201,168,76,0.35)" font-family="serif" font-size="11" letter-spacing="4">AURUM</text>
+          <text x="150" y="190" text-anchor="middle" fill="rgba(201,168,76,0.2)" font-family="serif" font-size="6" letter-spacing="2">750 · 18K GOLD</text>
+          <!-- Surface highlight -->
+          <ellipse cx="130" cy="140" rx="40" ry="12" fill="rgba(255,230,120,0.07)" transform="rotate(-15,130,140)"/>
+        </svg>
+      </div>
+      <div class="material-border"></div>
+      <div class="material-overlay"></div>
+      <div class="material-info">
+        <div class="material-name">18K Rose Gold</div>
+        <div class="material-origin">Valcambi Refinery · Switzerland</div>
+        <div class="material-desc">Our proprietary 750‰ alloy with trace copper and palladium. Cast, machined, and hand-polished in-house for a warmer, more enduring hue.</div>
+      </div>
+    </div>
+
+    <!-- Alligator Leather -->
+    <div class="material-card">
+      <div class="material-bg">
+        <svg viewBox="0 0 300 400" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="leatherGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#1a0a02"/>
+              <stop offset="100%" stop-color="#080402"/>
+            </linearGradient>
+          </defs>
+          <rect width="300" height="400" fill="url(#leatherGrad)"/>
+          <!-- Alligator scale pattern -->
+          <g fill="none" stroke="rgba(201,168,76,0.08)" stroke-width="0.5">
+            <!-- Row 1 -->
+            <ellipse cx="30" cy="30" rx="22" ry="16"/>
+            <ellipse cx="74" cy="30" rx="22" ry="16"/>
+            <ellipse cx="118" cy="30" rx="22" ry="16"/>
+            <ellipse cx="162" cy="30" rx="22" ry="16"/>
+            <ellipse cx="206" cy="30" rx="22" ry="16"/>
+            <ellipse cx="250" cy="30" rx="22" ry="16"/>
+            <ellipse cx="294" cy="30" rx="22" ry="16"/>
+            <!-- Row 2 (offset) -->
+            <ellipse cx="8" cy="60" rx="22" ry="16"/>
+            <ellipse cx="52" cy="60" rx="22" ry="16"/>
+            <ellipse cx="96" cy="60" rx="22" ry="16"/>
+            <ellipse cx="140" cy="60" rx="22" ry="16"/>
+            <ellipse cx="184" cy="60" rx="22" ry="16"/>
+            <ellipse cx="228" cy="60" rx="22" ry="16"/>
+            <ellipse cx="272" cy="60" rx="22" ry="16"/>
+            <!-- Row 3 -->
+            <ellipse cx="30" cy="90" rx="22" ry="16"/>
+            <ellipse cx="74" cy="90" rx="22" ry="16"/>
+            <ellipse cx="118" cy="90" rx="22" ry="16"/>
+            <ellipse cx="162" cy="90" rx="22" ry="16"/>
+            <ellipse cx="206" cy="90" rx="22" ry="16"/>
+            <ellipse cx="250" cy="90" rx="22" ry="16"/>
+            <!-- Row 4 -->
+            <ellipse cx="8" cy="120" rx="22" ry="16"/>
+            <ellipse cx="52" cy="120" rx="22" ry="16"/>
+            <ellipse cx="96" cy="120" rx="22" ry="16"/>
+            <ellipse cx="140" cy="120" rx="22" ry="16"/>
+            <ellipse cx="184" cy="120" rx="22" ry="16"/>
+            <ellipse cx="228" cy="120" rx="22" ry="16"/>
+            <ellipse cx="272" cy="120" rx="22" ry="16"/>
+            <!-- Row 5 -->
+            <ellipse cx="30" cy="150" rx="22" ry="16"/>
+            <ellipse cx="74" cy="150" rx="22" ry="16"/>
+            <ellipse cx="118" cy="150" rx="22" ry="16"/>
+            <ellipse cx="162" cy="150" rx="22" ry="16"/>
+            <ellipse cx="206" cy="150" rx="22" ry="16"/>
+            <ellipse cx="250" cy="150" rx="22" ry="16"/>
+            <!-- Continue rows... -->
+            <ellipse cx="8" cy="180" rx="22" ry="16"/>
+            <ellipse cx="52" cy="180" rx="22" ry="16"/>
+            <ellipse cx="96" cy="180" rx="22" ry="16"/>
+            <ellipse cx="140" cy="180" rx="22" ry="16"/>
+            <ellipse cx="184" cy="180" rx="22" ry="16"/>
+            <ellipse cx="228" cy="180" rx="22" ry="16"/>
+            <ellipse cx="272" cy="180" rx="22" ry="16"/>
+            <ellipse cx="30" cy="210" rx="22" ry="16"/>
+            <ellipse cx="74" cy="210" rx="22" ry="16"/>
+            <ellipse cx="118" cy="210" rx="22" ry="16"/>
+            <ellipse cx="162" cy="210" rx="22" ry="16"/>
+            <ellipse cx="206" cy="210" rx="22" ry="16"/>
+            <ellipse cx="250" cy="210" rx="22" ry="16"/>
+            <ellipse cx="8" cy="240" rx="22" ry="16"/>
+            <ellipse cx="52" cy="240" rx="22" ry="16"/>
+            <ellipse cx="96" cy="240" rx="22" ry="16"/>
+            <ellipse cx="140" cy="240" rx="22" ry="16"/>
+            <ellipse cx="184" cy="240" rx="22" ry="16"/>
+            <ellipse cx="228" cy="240" rx="22" ry="16"/>
+            <ellipse cx="272" cy="240" rx="22" ry="16"/>
+            <ellipse cx="30" cy="270" rx="22" ry="16"/>
+            <ellipse cx="74" cy="270" rx="22" ry="16"/>
+            <ellipse cx="118" cy="270" rx="22" ry="16"/>
+            <ellipse cx="162" cy="270" rx="22" ry="16"/>
+            <ellipse cx="206" cy="270" rx="22" ry="16"/>
+            <ellipse cx="250" cy="270" rx="22" ry="16"/>
+            <ellipse cx="8" cy="300" rx="22" ry="16"/>
+            <ellipse cx="52" cy="300" rx="22" ry="16"/>
+            <ellipse cx="96" cy="300" rx="22" ry="16"/>
+            <ellipse cx="140" cy="300" rx="22" ry="16"/>
+            <ellipse cx="184" cy="300" rx="22" ry="16"/>
+            <ellipse cx="228" cy="300" rx="22" ry="16"/>
+            <ellipse cx="272" cy="300" rx="22" ry="16"/>
+            <ellipse cx="30" cy="330" rx="22" ry="16"/>
+            <ellipse cx="74" cy="330" rx="22" ry="16"/>
+            <ellipse cx="118" cy="330" rx="22" ry="16"/>
+            <ellipse cx="162" cy="330" rx="22" ry="16"/>
+            <ellipse cx="206" cy="330" rx="22" ry="16"/>
+            <ellipse cx="250" cy="330" rx="22" ry="16"/>
+            <ellipse cx="8" cy="360" rx="22" ry="16"/>
+            <ellipse cx="52" cy="360" rx="22" ry="16"/>
+            <ellipse cx="96" cy="360" rx="22" ry="16"/>
+            <ellipse cx="140" cy="360" rx="22" ry="16"/>
+            <ellipse cx="184" cy="360" rx="22" ry="16"/>
+            <ellipse cx="228" cy="360" rx="22" ry="16"/>
+            <ellipse cx="272" cy="360" rx="22" ry="16"/>
+            <ellipse cx="30" cy="390" rx="22" ry="16"/>
+            <ellipse cx="74" cy="390" rx="22" ry="16"/>
+            <ellipse cx="118" cy="390" rx="22" ry="16"/>
+            <ellipse cx="162" cy="390" rx="22" ry="16"/>
+            <ellipse cx="206" cy="390" rx="22" ry="16"/>
+            <ellipse cx="250" cy="390" rx="22" ry="16"/>
+          </g>
+          <!-- Subtle sheen -->
+          <radialGradient id="leatherSheen" cx="50%" cy="30%">
+            <stop offset="0%" stop-color="rgba(201,168,76,0.12)"/>
+            <stop offset="100%" stop-color="transparent"/>
+          </radialGradient>
+          <rect width="300" height="400" fill="url(#leatherSheen)"/>
+        </svg>
+      </div>
+      <div class="material-border"></div>
+      <div class="material-overlay"></div>
+      <div class="material-info">
+        <div class="material-name">Mississippi Alligator</div>
+        <div class="material-origin">Maison Hermès Tannery · Paris</div>
+        <div class="material-desc">Hand-stitched belly-cut alligator in deep tobacco. Sourced from sustainable farms, tanned in Paris using a 200-year-old vegetable process.</div>
+      </div>
+    </div>
+
+    <!-- Titanium -->
+    <div class="material-card">
+      <div class="material-bg">
+        <svg viewBox="0 0 300 400" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="titanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#0f0f10"/>
+              <stop offset="50%" stop-color="#141416"/>
+              <stop offset="100%" stop-color="#0a0a0b"/>
+            </linearGradient>
+            <linearGradient id="titanSheen" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="transparent"/>
+              <stop offset="40%" stop-color="rgba(180,180,200,0.06)"/>
+              <stop offset="60%" stop-color="rgba(180,180,200,0.12)"/>
+              <stop offset="100%" stop-color="transparent"/>
+            </linearGradient>
+          </defs>
+          <rect width="300" height="400" fill="url(#titanGrad)"/>
+          <!-- Brushed texture lines -->
+          <g stroke="rgba(180,180,200,0.04)" stroke-width="0.4">
+            <line x1="0" y1="10" x2="300" y2="10"/>
+            <line x1="0" y1="18" x2="300" y2="18"/>
+            <line x1="0" y1="26" x2="300" y2="26"/>
+            <line x1="0" y1="34" x2="300" y2="34"/>
+            <line x1="0" y1="42" x2="300" y2="42"/>
+            <line x1="0" y1="50" x2="300" y2="50"/>
+            <line x1="0" y1="58" x2="300" y2="58"/>
+            <line x1="0" y1="66" x2="300" y2="66"/>
+            <line x1="0" y1="74" x2="300" y2="74"/>
+            <line x1="0" y1="82" x2="300" y2="82"/>
+            <line x1="0" y1="90" x2="300" y2="90"/>
+            <line x1="0" y1="98" x2="300" y2="98"/>
+            <line x1="0" y1="106" x2="300" y2="106"/>
+            <line x1="0" y1="114" x2="300" y2="114"/>
+            <line x1="0" y1="122" x2="300" y2="122"/>
+            <line x1="0" y1="130" x2="300" y2="130"/>
+            <line x1="0" y1="138" x2="300" y2="138"/>
+            <line x1="0" y1="146" x2="300" y2="146"/>
+            <line x1="0" y1="154" x2="300" y2="154"/>
+            <line x1="0" y1="162" x2="300" y2="162"/>
+            <line x1="0" y1="170" x2="300" y2="170"/>
+            <line x1="0" y1="178" x2="300" y2="178"/>
+            <line x1="0" y1="186" x2="300" y2="186"/>
+            <line x1="0" y1="194" x2="300" y2="194"/>
+            <line x1="0" y1="202" x2="300" y2="202"/>
+            <line x1="0" y1="210" x2="300" y2="210"/>
+            <line x1="0" y1="218" x2="300" y2="218"/>
+            <line x1="0" y1="226" x2="300" y2="226"/>
+            <line x1="0" y1="234" x2="300" y2="234"/>
+            <line x1="0" y1="242" x2="300" y2="242"/>
+            <line x1="0" y1="250" x2="300" y2="250"/>
+            <line x1="0" y1="258" x2="300" y2="258"/>
+            <line x1="0" y1="266" x2="300" y2="266"/>
+            <line x1="0" y1="274" x2="300" y2="274"/>
+            <line x1="0" y1="282" x2="300" y2="282"/>
+            <line x1="0" y1="290" x2="300" y2="290"/>
+            <line x1="0" y1="298" x2="300" y2="298"/>
+            <line x1="0" y1="306" x2="300" y2="306"/>
+            <line x1="0" y1="314" x2="300" y2="314"/>
+            <line x1="0" y1="322" x2="300" y2="322"/>
+            <line x1="0" y1="330" x2="300" y2="330"/>
+            <line x1="0" y1="338" x2="300" y2="338"/>
+            <line x1="0" y1="346" x2="300" y2="346"/>
+            <line x1="0" y1="354" x2="300" y2="354"/>
+            <line x1="0" y1="362" x2="300" y2="362"/>
+            <line x1="0" y1="370" x2="300" y2="370"/>
+            <line x1="0" y1="378" x2="300" y2="378"/>
+            <line x1="0" y1="386" x2="300" y2="386"/>
+            <line x1="0" y1="394" x2="300" y2="394"/>
+          </g>
+          <rect width="300" height="400" fill="url(#titanSheen)"/>
+          <!-- Ti symbol -->
+          <text x="150" y="220" text-anchor="middle" fill="rgba(180,180,200,0.15)" font-family="serif" font-size="80" font-weight="300">Ti</text>
+          <text x="150" y="255" text-anchor="middle" fill="rgba(180,180,200,0.08)" font-family="serif" font-size="10" letter-spacing="4">GRADE 5</text>
+        </svg>
+      </div>
+      <div class="material-border"></div>
+      <div class="material-overlay"></div>
+      <div class="material-info">
+        <div class="material-name">Grade 5 Titanium</div>
+        <div class="material-origin">DIN EN 3.7165 · Aerospace Grade</div>
+        <div class="material-desc">Aerospace-spec Ti-6Al-4V alloy: 45% lighter than steel with superior corrosion resistance. ADLC-coated to Rockwell 70C hardness.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════ HERITAGE QUOTE ══════════════════ -->
+<section id="heritage">
+  <blockquote class="heritage-quote reveal">
+    "We do not make watches for those who need them — we make them for those who understand that the most perfect object is the one that outlives its maker."
+  </blockquote>
+  <cite class="heritage-attribution">— Henri-Louis Aubert, Founder, 1886</cite>
+</section>
+
+<!-- ══════════════════ BESPOKE ══════════════════ -->
+<section id="bespoke">
+  <div>
+    <div class="section-label reveal">
+      <span class="section-number">05</span>
+      Bespoke Atelier
+    </div>
+    <h2 class="bespoke-heading reveal">
+      Uniquely<br><em>Yours</em>
+    </h2>
+    <p class="bespoke-text reveal">Commission a timepiece unlike any other. Our atelier in Geneva accepts twelve bespoke commissions per year. Each creation is a private conversation between the client and our master watchmaker.</p>
+    <ul class="bespoke-features">
+      <li class="bespoke-feature reveal">Private consultation in Geneva</li>
+      <li class="bespoke-feature reveal">Engraved calibre with your signature</li>
+      <li class="bespoke-feature reveal">Choice of movement complication</li>
+      <li class="bespoke-feature reveal">Personalised dial & case materials</li>
+      <li class="bespoke-feature reveal">Certificate of authenticity & documentation</li>
+      <li class="bespoke-feature reveal">Lifetime service guarantee</li>
+    </ul>
+    <a href="#" class="btn-primary reveal"><span>Begin Your Commission</span></a>
+  </div>
+
+  <div class="bespoke-visual reveal-right">
+    <div class="bespoke-orb">
+      <svg viewBox="0 0 400 400" width="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="orbGlow" cx="50%" cy="50%">
+            <stop offset="0%" stop-color="rgba(201,168,76,0.15)"/>
+            <stop offset="60%" stop-color="rgba(201,168,76,0.03)"/>
+            <stop offset="100%" stop-color="transparent"/>
+          </radialGradient>
+        </defs>
+        <circle cx="200" cy="200" r="195" fill="url(#orbGlow)"/>
+        <!-- Concentric rings -->
+        <circle cx="200" cy="200" r="185" fill="none" stroke="rgba(201,168,76,0.06)" stroke-width="1"/>
+        <circle cx="200" cy="200" r="160" fill="none" stroke="rgba(201,168,76,0.1)" stroke-width="0.5" stroke-dasharray="6 12"/>
+        <circle cx="200" cy="200" r="135" fill="none" stroke="rgba(201,168,76,0.08)" stroke-width="1"/>
+        <circle cx="200" cy="200" r="100" fill="none" stroke="rgba(201,168,76,0.12)" stroke-width="0.5"/>
+        <circle cx="200" cy="200" r="65" fill="none" stroke="rgba(201,168,76,0.15)" stroke-width="1"/>
+
+        <!-- Radial spoke lines -->
+        <g stroke="rgba(201,168,76,0.06)" stroke-width="0.5">
+          <line x1="200" y1="15" x2="200" y2="385"/>
+          <line x1="15" y1="200" x2="385" y2="200"/>
+          <line x1="62" y1="62" x2="338" y2="338"/>
+          <line x1="338" y1="62" x2="62" y2="338"/>
+          <line x1="200" y1="15" x2="200" y2="385" transform="rotate(22.5,200,200)"/>
+          <line x1="200" y1="15" x2="200" y2="385" transform="rotate(45,200,200)"/>
+          <line x1="200" y1="15" x2="200" y2="385" transform="rotate(67.5,200,200)"/>
+          <line x1="200" y1="15" x2="200" y2="385" transform="rotate(112.5,200,200)"/>
+          <line x1="200" y1="15" x2="200" y2="385" transform="rotate(135,200,200)"/>
+          <line x1="200" y1="15" x2="200" y2="385" transform="rotate(157.5,200,200)"/>
+        </g>
+
+        <!-- Compass points -->
+        <polygon points="200,16 205,30 200,26 195,30" fill="#C9A84C" opacity="0.5"/>
+        <polygon points="200,384 205,370 200,374 195,370" fill="#C9A84C" opacity="0.5"/>
+        <polygon points="16,200 30,195 26,200 30,205" fill="#C9A84C" opacity="0.5"/>
+        <polygon points="384,200 370,195 374,200 370,205" fill="#C9A84C" opacity="0.5"/>
+
+        <!-- Central monogram -->
+        <circle cx="200" cy="200" r="50" fill="rgba(201,168,76,0.04)" stroke="rgba(201,168,76,0.2)" stroke-width="1"/>
+        <text x="200" y="194" text-anchor="middle" fill="rgba(201,168,76,0.7)" font-family="serif" font-size="14" letter-spacing="5">AURUM</text>
+        <text x="200" y="210" text-anchor="middle" fill="rgba(201,168,76,0.35)" font-family="serif" font-size="7" letter-spacing="2">BESPOKE</text>
+        <line x1="168" y1="218" x2="232" y2="218" stroke="rgba(201,168,76,0.2)" stroke-width="0.5"/>
+
+        <!-- Tiny decorative dots on rings -->
+        <circle cx="200" cy="15" r="2" fill="#C9A84C" opacity="0.4"/>
+        <circle cx="200" cy="385" r="2" fill="#C9A84C" opacity="0.4"/>
+        <circle cx="15" cy="200" r="2" fill="#C9A84C" opacity="0.4"/>
+        <circle cx="385" cy="200" r="2" fill="#C9A84C" opacity="0.4"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ NEWSLETTER ══════════════════ -->
+<section id="newsletter">
+  <div class="newsletter-label reveal">Private Circle</div>
+  <h2 class="newsletter-heading reveal">Join the Inner Circle</h2>
+  <p class="newsletter-sub reveal">Receive invitations to private previews, ateliers, and auction events worldwide.</p>
+  <form class="newsletter-form reveal" onsubmit="return false;">
+    <input type="email" class="newsletter-input" placeholder="Your private email address">
+    <button type="submit" class="newsletter-btn">Request Access</button>
+  </form>
+</section>
+
+<!-- ══════════════════ FOOTER ══════════════════ -->
+<footer>
+  <div class="footer-top">
+    <div>
+      <span class="footer-brand">AURUM</span>
+      <p class="footer-tagline">"The measure of all things is the quality of the time we give them."</p>
+      <div class="footer-social">
+        <a href="#" class="social-link">IG</a>
+        <a href="#" class="social-link">FB</a>
+        <a href="#" class="social-link">TW</a>
+        <a href="#" class="social-link">YT</a>
+        <a href="#" class="social-link">LI</a>
+      </div>
+    </div>
+    <div>
+      <div class="footer-col-title">Collections</div>
+      <ul class="footer-links">
+        <li><a href="#">Dress Watches</a></li>
+        <li><a href="#">Tourbillons</a></li>
+        <li><a href="#">Sport Chronographs</a></li>
+        <li><a href="#">Grand Complications</a></li>
+        <li><a href="#">Bespoke Atelier</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-col-title">The Maison</div>
+      <ul class="footer-links">
+        <li><a href="#">Our Heritage</a></li>
+        <li><a href="#">Craftsmanship</a></li>
+        <li><a href="#">Master Watchmakers</a></li>
+        <li><a href="#">Sustainability</a></li>
+        <li><a href="#">Careers</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-col-title">Services</div>
+      <ul class="footer-links">
+        <li><a href="#">Servicing & Repair</a></li>
+        <li><a href="#">Authentication</a></li>
+        <li><a href="#">Vintage Archive</a></li>
+        <li><a href="#">Boutiques</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2024 Aurum Horlogerie SA, Geneva · All Rights Reserved</span>
+    <ul class="footer-legal">
+      <li><a href="#">Privacy Policy</a></li>
+      <li><a href="#">Terms of Sale</a></li>
+      <li><a href="#">Cookie Preferences</a></li>
+      <li><a href="#">Legal</a></li>
+    </ul>
+  </div>
+</footer>
+
+<!-- ══════════════════ JAVASCRIPT ══════════════════ -->
+<script>
+  /* ─── LOADER ─── */
+  const loader = document.getElementById('loader');
+  const loaderBar = document.getElementById('loaderBar');
+  let prog = 0;
+  const loaderInterval = setInterval(() => {
+    prog += Math.random() * 25;
+    if (prog >= 100) { prog = 100; clearInterval(loaderInterval); }
+    loaderBar.style.width = prog + '%';
+    if (prog >= 100) setTimeout(() => loader.classList.add('hidden'), 400);
+  }, 200);
+
+  /* ─── CUSTOM CURSOR ─── */
+  const cursor = document.getElementById('cursor');
+  const cursorRing = document.getElementById('cursor-ring');
+  let cursorX = 0, cursorY = 0;
+  let ringX = 0, ringY = 0;
+
+  document.addEventListener('mousemove', e => {
+    cursorX = e.clientX; cursorY = e.clientY;
+    cursor.style.left = cursorX + 'px';
+    cursor.style.top = cursorY + 'px';
+  });
+
+  (function animRing() {
+    ringX += (cursorX - ringX) * 0.12;
+    ringY += (cursorY - ringY) * 0.12;
+    cursorRing.style.left = ringX + 'px';
+    cursorRing.style.top = ringY + 'px';
+    requestAnimationFrame(animRing);
+  })();
+
+  /* ─── NAVBAR SCROLL ─── */
+  const navbar = document.getElementById('navbar');
+  window.addEventListener('scroll', () => {
+    navbar.classList.toggle('scrolled', window.scrollY > 50);
+  });
+
+  /* ─── CLOCK HANDS ─── */
+  function updateClock() {
+    const now = new Date();
+    const s = now.getSeconds() + now.getMilliseconds() / 1000;
+    const m = now.getMinutes() + s / 60;
+    const h = (now.getHours() % 12) + m / 60;
+    const sdeg = s * 6;
+    const mdeg = m * 6;
+    const hdeg = h * 30;
+
+    const setRot = (id, deg) => {
+      const el = document.getElementById(id);
+      if (el) { el.style.transform = `rotate(${deg}deg)`; el.style.transformOrigin = '150px 150px'; }
+    };
+
+    setRot('secondHand', sdeg);
+    setRot('secondTail', sdeg);
+    setRot('minuteHand', mdeg);
+    setRot('hourHand', hdeg);
+
+    // sub-dial second hand
+    const subEl = document.getElementById('subSecHand');
+    if (subEl) { subEl.style.transform = `rotate(${sdeg}deg)`; subEl.style.transformOrigin = '150px 210px'; }
+  }
+
+  setInterval(updateClock, 50);
+  updateClock();
+
+  /* ─── SCROLL REVEAL ─── */
+  const revealEls = document.querySelectorAll('.reveal, .reveal-left, .reveal-right');
+  const revealObs = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => entry.target.classList.add('visible'), entry.target.dataset.delay || 0);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+
+  revealEls.forEach((el, i) => {
+    el.dataset.delay = (i % 4) * 100;
+    revealObs.observe(el);
+  });
+
+  /* ─── COUNTER ANIMATION ─── */
+  function animateCounter(el, target, duration) {
+    let start = 0;
+    const step = (timestamp) => {
+      if (!start) start = timestamp;
+      const progress = Math.min((timestamp - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.floor(eased * target).toLocaleString();
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  const counterObs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const el = entry.target;
+        animateCounter(el, parseInt(el.dataset.target), 2000);
+        counterObs.unobserve(el);
+      }
+    });
+  }, { threshold: 0.5 });
+
+  document.querySelectorAll('.counter').forEach(el => counterObs.observe(el));
+
+  /* ─── COLLECTION FILTER ─── */
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+
+  /* ─── GEAR ROTATION ─── */
+  let gearAngle = 0;
+  function animateGears() {
+    gearAngle += 0.1;
+    const g1 = document.getElementById('mainGear');
+    const g2 = document.getElementById('smallGear1');
+    const g3 = document.getElementById('smallGear2');
+    if (g1) g1.style.transform = `rotate(${gearAngle}deg)`;
+    if (g1) g1.style.transformOrigin = '200px 230px';
+    if (g2) { g2.style.transform = `rotate(${-gearAngle * 2.3}deg)`; g2.style.transformOrigin = '290px 150px'; }
+    if (g3) { g3.style.transform = `rotate(${-gearAngle * 2.0}deg)`; g3.style.transformOrigin = '110px 310px'; }
+    requestAnimationFrame(animateGears);
+  }
+  animateGears();
+
+  /* ─── PARALLAX (subtle) ─── */
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        const scrolled = window.scrollY;
+        const heroGrid = document.querySelector('.hero-grid');
+        if (heroGrid) heroGrid.style.transform = `translateY(${scrolled * 0.3}px)`;
+        ticking = false;
+      });
+      ticking = true;
+    }
+  });
+
+  /* ─── MAGNETIC HOVER ON BUTTONS ─── */
+  document.querySelectorAll('.btn-primary, .nav-cta, .watch-add-btn').forEach(btn => {
+    btn.addEventListener('mousemove', function(e) {
+      const rect = this.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      this.style.transform = `translate(${x * 0.15}px, ${y * 0.2}px)`;
+    });
+    btn.addEventListener('mouseleave', function() {
+      this.style.transform = '';
+      this.style.transition = 'transform 0.4s cubic-bezier(0.34,1.56,0.64,1)';
+    });
+  });
+
+  /* ─── SMOOTH ANCHOR SCROLL ─── */
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+      const target = document.querySelector(this.getAttribute('href'));
+      if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    });
+  });
+</script>
+</body>
+</html>
